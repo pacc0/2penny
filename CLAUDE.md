@@ -46,3 +46,8 @@ Planning conversations: Spanish. Agent instructions, code, commit messages: Engl
 - Skills: .claude/skills/
 - Pipeline: Architect -> Guardian Gate 1 -> HUMAN approval -> Developer -> Reviewer
   -> Guardian Gate 2 -> HUMAN merge.
+
+## Session start
+Run `git remote -v` at session start; if it points to pacc0/penny, STOP —
+wrong repo (ADR-0004). Governance lives in /docs (PRINCIPLES.md is supreme
+law); backend deploys ONLY via the clasp-deploy skill.
