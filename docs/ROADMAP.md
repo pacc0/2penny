@@ -9,8 +9,8 @@ NO-cambia.
 | Etapa | Nombre | Estado |
 |---|---|---|
 | 0 | Spike de infraestructura (Access sobre pages.dev) | ✅ CERRADA 2026-07-09 |
-| 1 | Scaffold del monorepo + docs de gobernanza | 🔵 EN CURSO |
-| 2 | Endpoint JSON headless en Apps Script (deployment separado) | ⚪ |
+| 1 | Scaffold del monorepo + docs de gobernanza | ✅ CERRADA 2026-07-09 |
+| 2 | Endpoint JSON headless en Apps Script (deployment separado) | 🔵 EN CURSO |
 | 3 | Shell Svelte 5 + mock data en Pages tras Access | ⚪ |
 | 4 | Datos reales vía Pages Function proxy | ⚪ (gate: ADR-0002 resuelto antes de cerrar) |
 | 5 | Rediseño visual Night Ledger | ⚪ |

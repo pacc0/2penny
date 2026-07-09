@@ -81,3 +81,17 @@ complejidad diferible, no descartada.
 §Anti-slop (governance). No se crea skill `ui-taste` separada
 (duplicación).
 **Fecha:** 2026-07-09.
+
+## ADR-0009 — Cierre Etapa 1 (scaffold + gobernanza)
+
+**Contexto:** Etapa 1 (scaffold del monorepo + docs de gobernanza)
+completada task por task según `docs/plans/stage-1-scaffold-plan.md`.
+**Decisión:** cerrar la Etapa 1, marcar la Etapa 2 como próxima activa.
+**Evidencia:** 9 commits (`c4341b1`..`e2d8fc0`); 6 docs de gobernanza en
+`docs/`; 10 `SKILL.md` en `.claude/skills/`; 1 subagent reviewer en
+`.claude/agents/`; 2 workflows CI dormidos en `.github/workflows/`;
+`README.md` raíz. Integridad de webhook: sin cambios — `backend/`
+contiene únicamente el stub `README.md` (commit `0fd402a`), ningún
+comando `clasp` fue ejecutado en esta etapa (no aplica aún, sin código
+Apps Script en el repo).
+**Fecha:** 2026-07-09.
