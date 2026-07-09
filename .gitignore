@@ -1,0 +1,12 @@
+﻿# Node
+node_modules/
+dist/
+.svelte-kit/
+build/
+
+# Cloudflare / Wrangler
+.wrangler/
+.dev.vars
+
+# clasp credentials
+backend/.clasp.json
