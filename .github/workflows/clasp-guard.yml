@@ -1,0 +1,11 @@
+name: clasp-guard
+# Stage 8 guardrail — INTENTIONALLY INERT until Stage 8 (see docs/ROADMAP.md).
+# Final version will verify webhook deployment-id integrity after backend
+# pushes, using the CLASPRC_JSON secret (never committed), and fail on drift.
+on:
+  workflow_dispatch:
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "clasp-guard is a Stage 8 deliverable. Inert by design."
