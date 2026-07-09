@@ -10,3 +10,7 @@ build/
 
 # clasp credentials
 backend/.clasp.json
+
+# local work files
+stage0-docs/
+*.zip
