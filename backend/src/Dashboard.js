@@ -22,12 +22,15 @@ var COL_SOURCE = 11;
 var COL_STATUS = 12;
 var COL_CREATED_AT = 13;
 
+// RENAMED in Stage 2: the v1.0 dashboard deployment is PINNED to the pre-Stage-2
+// version and still serves this function there. Never bump that deployment.
+// Retirement: Stage 7. See docs/DECISIONS.md ADR-0011.
 /**
  * Web App entry point (this project's only doGet — doPost is owned by the
  * Telegram webhook). No caching, no partial render: any read failure serves
  * a single Spanish error message.
  */
-function doGet() {
+function doGet_legacy_v1() {
   try {
     var template = HtmlService.createTemplateFromFile('DashboardPage');
     template.data = buildDashboardData_(getSpreadsheetId_());
