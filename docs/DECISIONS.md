@@ -95,3 +95,33 @@ contiene únicamente el stub `README.md` (commit `0fd402a`), ningún
 comando `clasp` fue ejecutado en esta etapa (no aplica aún, sin código
 Apps Script en el repo).
 **Fecha:** 2026-07-09.
+
+## ADR-0010 — Auth de dos capas del endpoint JSON
+
+**Contexto:** Apps Script no emite códigos HTTP custom (`ContentService`
+siempre responde 200); el endpoint JSON headless necesita autenticación.
+**Decisión:** auth de dos capas. Capa 1 (`doGet`, Etapa 2) valida
+`e.parameter.key` contra `API_SECRET` en Script Properties; sin match →
+`error` en el body (HTTP 200). Capa 2 (Pages Function, Etapa 4) traduce
+`error != null` a status HTTP real (401/500) antes de llegar al navegador.
+El secreto viaja por query param porque `doGet` no puede leer headers;
+mitigado porque solo la Pages Function, server-side, conoce y llama esa URL.
+**Justificación:** enmienda a la restricción ratificada originalmente
+("secret requerido, 401 sin él"), necesaria por la limitación dura de
+Apps Script de no poder emitir códigos HTTP custom. Aprobada por Camilo
+2026-07-09.
+**Fecha:** 2026-07-09.
+
+## ADR-0011 — Estrategia doGet: rename + pinning
+
+**Contexto:** un proyecto Apps Script admite un solo `doGet` global; el
+deployment v1.0 (dashboard HTML) y el nuevo endpoint JSON no pueden
+coexistir como dos funciones `doGet` distintas en el mismo @HEAD.
+**Decisión:** el legacy `doGet` (dashboard HTML, en `Dashboard.js`) se
+renombra a `doGet_legacy_v1`. El deployment v1.0 queda pinneado a la
+versión previa (snapshot inmutable de código) y JAMÁS se bumpea a una
+nueva versión; se retira en Etapa 7. El nuevo `doGet` (en `Api.js`) sirve
+el endpoint JSON, desplegado como un deployment NUEVO — excepción
+documentada de la disciplina clasp-deploy ("nunca crear deployment
+nuevo"), que protege endpoints EXISTENTES, no aplica a un endpoint nuevo.
+**Fecha:** 2026-07-09.
