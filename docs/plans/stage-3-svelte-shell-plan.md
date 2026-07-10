@@ -27,10 +27,15 @@
 ```
 git remote -v            # pacc0/2penny
 git status --short       # clean
-node --version           # v22.x — STOP if major differs from CI (22)
+node --version           # v24.x — STOP if major differs from CI (24)
 npx wrangler --version   # installed; if not: npm i -g wrangler, then wrangler login status check
 ```
 Also verify `frontend/` contains only README.md.
+
+> **Amendment (2026-07-09):** dev machine runs Node 24, not 22 as originally
+> written here. `frontend-ci.yml` was bumped 22 → 24 (commit `667bccc`) to
+> match rather than pinning dev to a stale runtime. Precondition above
+> updated to 24 accordingly.
 
 ---
 
