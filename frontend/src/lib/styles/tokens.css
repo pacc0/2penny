@@ -1,0 +1,35 @@
+/* VERBATIM copy of docs/DESIGN.md §2 — do not edit directly. Source of
+   truth: DESIGN.md (Verbatim Token Rule). */
+:root {
+  /* Do not edit directly — source: docs/DESIGN.md */
+  --bg: #0B0B0D;
+  --surface: #161619;
+  --surface-raised: #1F1F24;
+  --hairline: #26262B;
+  --ink: #F0F0EE;
+  --ink-muted: #9A9AA3;
+  --ink-on-tint: #101014;
+  --income-green: #3ECF8E;
+  --income-green-tint: #BDE7CB;
+  --expense-coral: #FF8A4C;
+  --expense-coral-tint: #FFCBB0;
+  --savings-teal: #26C6DA;
+  --progress-amber: #FFC53D;
+  --progress-amber-tint: #FFE7B0;
+  --alert-red: #EF4444;
+  --pending-grey: #C7C7CE;
+  --pending-grey-bg: #2A2A30;
+  --chart-extra-1: #8B8BF5;
+  --chart-extra-2: #E36FB1;
+  --font-text: 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-numeric: 'Averia Sans Libre', 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --rounded-sm: 6px;
+  --rounded-md: 10px;
+  --rounded-lg: 14px;
+  --rounded-pill: 999px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
