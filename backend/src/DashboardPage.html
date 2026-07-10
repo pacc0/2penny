@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Penny — Tablero</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/nunito@5.2.7/index.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/averia-sans-libre@5.2.7/index.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/averia-sans-libre@5.2.7/700.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+  <style>
+    :root {
+      /* Do not edit directly — source: docs/DESIGN.md */
+      --bg: #0B0B0D;
+      --surface: #161619;
+      --surface-raised: #1F1F24;
+      --hairline: #26262B;
+      --ink: #F0F0EE;
+      --ink-muted: #9A9AA3;
+      --ink-on-tint: #101014;
+      --income-green: #3ECF8E;
+      --income-green-tint: #BDE7CB;
+      --expense-coral: #FF8A4C;
+      --expense-coral-tint: #FFCBB0;
+      --savings-teal: #26C6DA;
+      --progress-amber: #FFC53D;
+      --progress-amber-tint: #FFE7B0;
+      --alert-red: #EF4444;
+      --pending-grey: #C7C7CE;
+      --pending-grey-bg: #2A2A30;
+      --chart-extra-1: #8B8BF5;
+      --chart-extra-2: #E36FB1;
+      --font-text: 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+      --font-numeric: 'Averia Sans Libre', 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+      --rounded-sm: 6px;
+      --rounded-md: 10px;
+      --rounded-lg: 14px;
+      --rounded-pill: 999px;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      padding: var(--spacing-xl);
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-text);
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+    }
+    /* Wordmark exception: "Penny" is set in font-numeric even though it's not a numeral —
+       an intentional exception to font-numeric's normal numeral-only scope. Document at
+       freeze time so it isn't mistaken for an error. */
+    h1 { font-family: var(--font-numeric); font-size: 53px; font-weight: 700; line-height: 1.3; margin: 0; } /* 42px +10%, +15% */
+    .page-date { color: var(--ink-muted); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; } /* 12px +15% */
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--spacing-md) var(--spacing-lg);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: card-in 260ms ease-out forwards;
+      animation-delay: calc(var(--i, 0) * 40ms);
+    }
+    @keyframes card-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card { animation: none; opacity: 1; transform: none; }
+    }
+    .card-label { font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--ink-muted); } /* 12px +10%, +15% */
+    .card-value {
+      font-family: var(--font-numeric);
+      font-size: 36px; /* 28px baseline, bumped +10% then +15% per live device review, rounded */
+      font-weight: 700;
+      line-height: 1.1;
+      margin-top: var(--spacing-xs);
+    }
+    .card--hero { border-color: transparent; color: var(--ink-on-tint); }
+    .card--hero .card-label { color: var(--ink-on-tint); }
+    .card--hero-expense { background: var(--expense-coral-tint); }
+    .card--hero-positive { background: var(--income-green-tint); }
+    .card--hero-negative { background: var(--expense-coral-tint); }
+    .card--hero-pending { background: var(--progress-amber-tint); }
+    .value-income { color: var(--income-green); }
+    .value-savings { color: var(--savings-teal); }
+    .value-pending { color: var(--pending-grey); }
+
+    .progress-pct {
+      font-family: var(--font-numeric);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-top: var(--spacing-xs);
+    }
+    .progress-track {
+      height: 10px;
+      background: var(--surface-raised);
+      border-radius: var(--rounded-pill);
+      overflow: hidden;
+      margin-top: var(--spacing-sm);
+    }
+    .progress-fill { height: 100%; border-radius: var(--rounded-pill); }
+    .progress-low .progress-fill { background: var(--alert-red); }
+    .progress-mid .progress-fill { background: var(--progress-amber); }
+    .progress-high .progress-fill { background: var(--income-green); }
+
+    .chart-wrap { position: relative; }
+    .chart-wrap--bar { height: 320px; flex-shrink: 0; }
+    .chart-wrap--doughnut { height: 312px; flex-shrink: 0; } /* +20% over the 260px baseline, per iteration */
+    /* Round 13: line wrap grows to fill the card (grid-stretched to match the
+       taller donut card in the same row) instead of leaving dead space below. */
+    .chart-wrap--line { flex: 1; min-height: 240px; }
+    .chart-card { display: flex; flex-direction: column; }
+    .chart-card .card-label { margin-bottom: var(--spacing-sm); }
+
+    .badge-pending {
+      display: inline-block;
+      background: var(--pending-grey-bg);
+      color: var(--pending-grey);
+      border-radius: var(--rounded-pill);
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+    /* Round 14: badge amends D4 same as the pending hero — pastel amber + black
+       text when pendingCount >= 1, neutral (above) at 0. All viewports. */
+    .badge-pending--active {
+      background: var(--progress-amber-tint);
+      color: var(--ink-on-tint);
+    }
+
+    .table-card { padding: 0; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: var(--surface-raised);
+      color: var(--ink-muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: left;
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    td { padding: var(--spacing-sm) var(--spacing-md); border-top: 1px solid var(--hairline); font-size: 15px; }
+    tbody tr:hover td { background: var(--surface-raised); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.date { font-variant-numeric: tabular-nums; color: var(--ink-muted); }
+
+    /* Variant B layout: oversized heroes lead (mobile-reference energy on desktop); the rest follows DASHBOARD.md row order. */
+    .grid { display: grid; gap: var(--spacing-lg); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .row { margin-bottom: var(--spacing-lg); }
+    .estado-b {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr;
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: var(--spacing-lg);
+    }
+    .hero-lg {
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 220px;
+    }
+    .hero-note { font-size: 12px; font-weight: 700; line-height: 1.3; margin-top: var(--spacing-sm); }
+
+    /* Round 14 mobile carousels — desktop default is "not there": display:contents
+       unwraps wrap/track so their card children stay direct children of the
+       .estado-b / .grid-4 grid, placed exactly as before wrapping existed. */
+    .carousel-wrap, .carousel-track { display: contents; }
+    .carousel-dots { display: none; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-sm);
+    }
+    .section-title { font-size: 18px; font-weight: 700; line-height: 1.3; margin: 0; }
+
+    @media (max-width: 768px) {
+      body { padding: var(--spacing-md); }
+      .grid { gap: var(--spacing-md); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .row { margin-bottom: var(--spacing-md); }
+      .estado-b { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; gap: var(--spacing-md); }
+      .hero-lg { grid-row: auto; min-height: 0; }
+      /* Pending table: Fecha, Comercio, Monto only — hide Categoría/Propósito and Cuenta to avoid crowding. */
+      th:nth-child(3), td:nth-child(3), th:nth-child(5), td:nth-child(5) { display: none; }
+      /* Donut is width-constrained in the single-column mobile layout, not height-constrained —
+         the full +20% desktop height (312px) would just add empty vertical space here. */
+      .chart-wrap--doughnut { height: 280px; }
+    }
+    @media (max-width: 480px) {
+      /* Round 13: 2-col 1fr tracks can't shrink below the heroes' min-content
+         width (non-wrapping COP numerals + card padding) at 395px — collapse
+         hero/KPI rows to a single column. */
+      .estado-b, .grid-4 { grid-template-columns: 1fr; }
+
+      /* Round 14: heroes/KPIs become swipeable carousels — one slide per page,
+         no peek. Track scrolls; wrap/dots stop being display:contents/none. */
+      /* Round 15 fix: .carousel-wrap is a grid item with default min-width:auto,
+         so it inherits the nowrap flex track's full min-content (sum of every
+         non-shrinking slide) as its own floor, blowing the column past the
+         viewport. min-width:0 lets it respect the 1fr column instead, so
+         .carousel-track's own overflow-x:auto clips internally as intended. */
+      .carousel-wrap { display: block; min-width: 0; }
+      .carousel-track {
+        display: flex;
+        min-width: 0;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .carousel-track::-webkit-scrollbar { display: none; }
+      .carousel-slide {
+        flex: 0 0 100%;
+        width: 100%;
+        scroll-snap-align: center;
+      }
+      .carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+      }
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-muted); }
+      .dot.active { background: var(--progress-amber); }
+
+      /* Round 14: Transacciones Pendientes hero folds into the table badge on mobile. */
+      #pending-count-card { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Penny</h1>
+    <div class="page-date" id="page-date"></div>
+  </header>
+
+  <!-- Row 1 — Estado Actual: heroes dominate, Ingresos/Pendientes stack beside.
+       Round 14: Gastos/Flujo Neto/Ingresos wrapped for the mobile "flujo" carousel;
+       at desktop, .carousel-wrap/.carousel-track are display:contents so these
+       three cards are direct .estado-b grid children exactly as before wrapping. -->
+  <section class="estado-b row" aria-label="Estado actual">
+    <div class="carousel-wrap">
+      <div class="carousel-track" id="flujo-track">
+        <div class="carousel-slide card card--hero card--hero-expense hero-lg">
+          <div class="card-label">Gastos (Mes Actual)</div>
+          <div class="card-value" id="expenses-value"></div>
+          <div class="hero-note">Confirmados, mes en curso</div>
+        </div>
+        <div class="carousel-slide card card--hero hero-lg" id="netflow-card">
+          <div class="card-label">Flujo Neto</div>
+          <div class="card-value" id="netflow-value"></div>
+          <div class="hero-note">Ingresos menos gastos confirmados</div>
+        </div>
+        <div class="carousel-slide card">
+          <div class="card-label">Ingresos (Mes Actual)</div>
+          <div class="card-value value-income" id="income-value"></div>
+        </div>
+      </div>
+      <div class="carousel-dots" id="flujo-dots">
+        <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+    <div class="card" id="pending-count-card">
+      <div class="card-label">Transacciones Pendientes</div>
+      <div class="card-value value-pending" id="pending-count-value"></div>
+    </div>
+  </section>
+
+  <!-- Row 2 — Progreso de Ahorro. Round 14: all four cards wrapped for the
+       mobile "ahorro" carousel; desktop contents-unwrap keeps them as direct
+       .grid-4 children, same as before wrapping. -->
+  <section class="grid grid-4 row" aria-label="Progreso de ahorro">
+    <div class="carousel-wrap">
+      <div class="carousel-track" id="ahorro-track">
+        <div class="carousel-slide card">
+          <div class="card-label">Ahorro (Mes Actual)</div>
+          <div class="card-value value-savings" id="savings-month-value"></div>
+        </div>
+        <div class="carousel-slide card">
+          <div class="card-label">Ahorro Acumulado (Año)</div>
+          <div class="card-value value-savings" id="savings-ytd-value"></div>
+        </div>
+        <div class="carousel-slide card" id="progress-monthly-card">
+          <div class="card-label">Meta Mensual de Ahorro</div>
+          <div class="progress-pct" id="progress-monthly-pct"></div>
+          <div class="progress-track"><div class="progress-fill" id="progress-monthly-fill"></div></div>
+        </div>
+        <div class="carousel-slide card" id="progress-annual-card">
+          <div class="card-label">Meta Anual de Ahorro</div>
+          <div class="progress-pct" id="progress-annual-pct"></div>
+          <div class="progress-track"><div class="progress-fill" id="progress-annual-fill"></div></div>
+        </div>
+      </div>
+      <div class="carousel-dots" id="ahorro-dots">
+        <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Row 3 — Gastos por Categoría (donut, left) beside Evolución del Flujo Neto (right).
+       Iteration round 2, point 2: replaces round 1's stacked Evolución/Desglose entirely. -->
+  <section class="grid grid-2 row" aria-label="Desglose y evolución">
+    <div class="card chart-card">
+      <div class="card-label">Gastos por Categoría</div>
+      <div class="chart-wrap chart-wrap--doughnut">
+        <canvas id="expenses-by-category-chart" role="img" aria-label="Gastos por Categoría"></canvas>
+      </div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-label">Evolución del Flujo Neto</div>
+      <div class="chart-wrap chart-wrap--line">
+        <canvas id="cumulative-net-flow-chart" role="img" aria-label="Evolución del Flujo Neto"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Row 4 — Gastos por Método de Pago, full width beneath Row 3. -->
+  <section class="row">
+    <div class="card chart-card">
+      <div class="card-label">Gastos por Método de Pago</div>
+      <div class="chart-wrap chart-wrap--bar">
+        <canvas id="expenses-by-account-chart" role="img" aria-label="Gastos por Método de Pago"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Row 5 — Transacciones Pendientes -->
+  <section class="row" id="pending-section">
+    <div class="section-head">
+      <h2 class="section-title">Transacciones</h2>
+      <span class="badge-pending" id="pending-badge"></span>
+    </div>
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Comercio/Descripción</th>
+            <th>Categoría/Propósito</th>
+            <th class="num">Monto</th>
+            <th>Cuenta</th>
+          </tr>
+        </thead>
+        <tbody id="pending-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    var dashboardData = <?!= JSON.stringify(data) ?>;
+
+    // Contractual guarantee (docs/DASHBOARD.md §2.4): cumulativeNetFlow's last
+    // entry always equals the current America/Bogota calendar date. Derive
+    // "today" from it — never the browser clock (new Date()) — so the header
+    // date stays consistent with the server-computed data it's presented beside.
+    var today = dashboardData.cumulativeNetFlow[dashboardData.cumulativeNetFlow.length - 1].date;
+
+    var rootStyle = getComputedStyle(document.documentElement);
+    function token(name) { return rootStyle.getPropertyValue(name).trim(); }
+
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function formatCOP(n) {
+      return (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+    }
+
+    // Auto-scaling axis formatter (K/M/B via Intl compact notation) — replaces
+    // a hardcoded /1e6 formatter tuned for ~$45M mock data. Real amounts range
+    // from tens of thousands (single expenses) to single-digit millions
+    // (monthly salary), so a fixed millions divisor either printed "0,0 M" or
+    // crowded the axis; Intl picks the right unit per tick automatically.
+    var compactCOPFormatter = new Intl.NumberFormat('es-CO', { notation: 'compact', maximumFractionDigits: 1 });
+    function formatCompactCOP(n) {
+      return (n < 0 ? '-' : '') + '$' + compactCOPFormatter.format(Math.abs(n));
+    }
+
+    function formatPct(n) {
+      return (n * 100).toFixed(dashboardData.settings.percentagePrecision) + '%';
+    }
+
+    // Real-device tap fix, shared by all three charts with a tooltip (line,
+    // bar, donut). Chart.js's own default touch binding (touchstart/touchmove
+    // in `events`) is passive — it never calls preventDefault — so on some
+    // real devices the browser's scroll/gesture disambiguation can swallow or
+    // delay the touch before Chart's own handler reliably fires at all,
+    // independent of the interaction mode/intersect setting (confirmed via
+    // on-device diagnostic: hit-testing itself was fine, the built-in handler
+    // just wasn't consistently running). Each chart drops touch out of its own
+    // `events` (`events: ['mousemove','mouseout','click']`, mouse-only — zero
+    // desktop impact) and this helper becomes the sole, explicit touch driver:
+    // non-passive `touchstart` + manual hit test + preventDefault. Firing on
+    // every touchstart also covers "tap a different element switches it" for
+    // free. `mode` matches whatever interaction mode the chart already uses
+    // (e.g. 'index' for the line chart, 'nearest' for bar/donut) — intersect
+    // is always false here since exact-target precision is what breaks touch.
+    function enableTapTooltip(chart, canvas, mode) {
+      canvas.addEventListener('touchstart', function (evt) {
+        var points = chart.getElementsAtEventForMode(evt, mode, { intersect: false }, true);
+        chart.tooltip.setActiveElements(
+          points.map(function (p) { return { datasetIndex: p.datasetIndex, index: p.index }; }),
+          points.length ? points[0].element.getCenterPoint() : { x: 0, y: 0 }
+        );
+        chart.update();
+        evt.preventDefault();
+      }, { passive: false });
+      // Tap anywhere outside this chart dismisses its tooltip.
+      document.addEventListener('touchstart', function (evt) {
+        if (canvas.contains(evt.target)) return;
+        chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+        chart.update();
+      }, { passive: true });
+    }
+
+    function progressClass(fraction) {
+      if (fraction < 0.5) return 'progress-low';
+      if (fraction <= 0.9) return 'progress-mid';
+      return 'progress-high';
+    }
+
+    // Category -> emoji lookup for the donut tooltip. Client-side constant per
+    // docs/DESIGN.md's Category Colors "Production home" decision (option C).
+    // Keyed to DATA_MODEL.md's 18 categories (14 expense + 4 income); only the
+    // expense categories reach this donut in practice (docs/DASHBOARD.md §3.3).
+    // An unmapped category keeps its name in the tooltip title rather than
+    // guessing an emoji — degraded, never broken.
+    var CATEGORY_EMOJI = {
+      'Salario / Honorarios': '💼',
+      'Inversiones / Rendimientos': '📈',
+      'Reintegros / Devoluciones': '↩️',
+      'Otros Ingresos': '💰',
+      'Obligación Mamá': '👩',
+      'Obligación Papá': '👨',
+      'Vivienda / Arriendo': '🏠',
+      'Servicios': '⚡',
+      'Suscripciones': '🔄',
+      'Alimentación': '🛒',
+      'Restaurantes / Domicilios': '🍽️',
+      'Transporte': '🚗',
+      'Compras Personales': '🛍️',
+      'Salud / Bienestar': '🩺',
+      'Mascotas': '🐾',
+      'Viajes': '✈️',
+      'Ocio / Entretenimiento': '🎮',
+      'Imprevistos / Emergencias': '🚨'
+    };
+
+    // es-CO month names for the header date and axis/table trimming.
+    var MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    var MONTHS_ES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    function parseISODate(iso) {
+      var parts = iso.split('-');
+      return { year: +parts[0], month: +parts[1], day: +parts[2] };
+    }
+
+    // "Mes Día, Año" — spelled-out month, not zero-padded (e.g. "Julio 23, 2026").
+    function formatHeaderDate(iso) {
+      var p = parseISODate(iso);
+      return MONTHS_ES[p.month - 1] + ' ' + p.day + ', ' + p.year;
+    }
+
+    // Trimmed day + month, no year (e.g. "23 Jul") — used on the trend-line axis
+    // and the pending-transactions list to avoid crowding.
+    function formatDayMonth(iso) {
+      var p = parseISODate(iso);
+      return p.day + ' ' + MONTHS_ES_ABBR[p.month - 1];
+    }
+
+    // Restrained count-up: eased 0 -> target, skipped entirely under
+    // prefers-reduced-motion (final value set immediately instead).
+    function countUp(el, target, formatFn, duration) {
+      if (reducedMotion) { el.textContent = formatFn(target); return; }
+      duration = duration || 600;
+      var start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = formatFn(target * eased);
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = formatFn(target);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Chart.js defaults per docs/DESIGN.md §5. Restrained load/update animation,
+    // fully disabled under prefers-reduced-motion.
+    Chart.defaults.font.family = token('--font-text');
+    Chart.defaults.font.size = 12;
+    Chart.defaults.font.weight = 700;
+    Chart.defaults.color = token('--ink-muted');
+    Chart.defaults.animation = reducedMotion ? false : { duration: 400, easing: 'easeOutQuad' };
+
+    document.getElementById('page-date').textContent = formatHeaderDate(today);
+
+    // Row 1
+    document.getElementById('income-value').textContent = formatCOP(dashboardData.month.income);
+    countUp(document.getElementById('expenses-value'), dashboardData.month.expenses, formatCOP);
+    countUp(document.getElementById('netflow-value'), dashboardData.month.netFlow, formatCOP);
+    document.getElementById('netflow-card').classList.add(
+      dashboardData.month.netFlow >= 0 ? 'card--hero-positive' : 'card--hero-negative'
+    );
+
+    // Pending-count hero card — conditional coloring (amends D4): zero pending stays
+    // neutral (plain .card, no fill change); one or more reuses the progress-amber
+    // pastel tint with black text, same visual role as the Gastos hero. This does not
+    // reintroduce the amber collision D4 warned about — that warning was about a
+    // *saturated* fill competing with the 50-90% progress-bar amber; this is a pastel
+    // *tint* used only as a card surface, the same tint-vs-saturation split already
+    // applied to income-green and expense-coral.
+    var pendingCard = document.getElementById('pending-count-card');
+    var pendingValueEl = document.getElementById('pending-count-value');
+    if (dashboardData.pendingCount > 0) {
+      pendingCard.classList.add('card--hero', 'card--hero-pending');
+      pendingValueEl.classList.remove('value-pending');
+      countUp(pendingValueEl, dashboardData.pendingCount, function (v) { return String(Math.round(v)); });
+    } else {
+      pendingValueEl.textContent = '0';
+    }
+
+    // Row 2
+    document.getElementById('savings-month-value').textContent = formatCOP(dashboardData.savings.month);
+    document.getElementById('savings-ytd-value').textContent = formatCOP(dashboardData.savings.ytd);
+
+    document.getElementById('progress-monthly-pct').textContent = formatPct(dashboardData.savings.progressMonthly);
+    document.getElementById('progress-monthly-fill').style.width = (Math.min(dashboardData.savings.progressMonthly, 1) * 100) + '%';
+    document.getElementById('progress-monthly-card').classList.add(progressClass(dashboardData.savings.progressMonthly));
+
+    document.getElementById('progress-annual-pct').textContent = formatPct(dashboardData.savings.progressAnnual);
+    document.getElementById('progress-annual-fill').style.width = (Math.min(dashboardData.savings.progressAnnual, 1) * 100) + '%';
+    document.getElementById('progress-annual-card').classList.add(progressClass(dashboardData.savings.progressAnnual));
+
+    // Evolución del Flujo Neto — cumulative line, Income Green, tension 0.3.
+    // X-axis trimmed to day + month, no year (crowding fix, iteration point 5).
+    var netFlowCanvas = document.getElementById('cumulative-net-flow-chart');
+    var netFlowChart = new Chart(netFlowCanvas, {
+      type: 'line',
+      data: {
+        labels: dashboardData.cumulativeNetFlow.map(function (row) { return formatDayMonth(row.date); }),
+        datasets: [{
+          data: dashboardData.cumulativeNetFlow.map(function (row) { return row.value; }),
+          borderColor: token('--income-green'),
+          backgroundColor: token('--income-green'),
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.3
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        events: ['mousemove', 'mouseout', 'click'], // touch driven by enableTapTooltip below
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) { return formatCOP(ctx.parsed.y); } } }
+        },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+          y: { grid: { color: token('--hairline') }, border: { display: false }, ticks: { callback: formatCompactCOP } }
+        }
+      }
+    });
+    enableTapTooltip(netFlowChart, netFlowCanvas, 'index');
+
+    // Gastos por Método de Pago — horizontal bars, Expense Coral, rounded per DESIGN.md §5.
+    // (Iteration point 2: payment-method now the bar chart, on the left.)
+    var accountCanvas = document.getElementById('expenses-by-account-chart');
+    var accountChart = new Chart(accountCanvas, {
+      type: 'bar',
+      data: {
+        labels: dashboardData.expensesByAccount.map(function (row) { return row.account; }),
+        datasets: [{
+          data: dashboardData.expensesByAccount.map(function (row) { return row.total; }),
+          backgroundColor: token('--expense-coral'),
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        maintainAspectRatio: false,
+        interaction: { mode: 'nearest', intersect: true },
+        events: ['mousemove', 'mouseout', 'click'], // touch driven by enableTapTooltip below
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) { return formatCOP(ctx.parsed.x); } } }
+        },
+        scales: {
+          x: { grid: { color: token('--hairline') }, border: { display: false }, ticks: { callback: formatCompactCOP } },
+          y: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              callback: function (value) {
+                var label = this.getLabelForValue(value);
+                return label.length > 18 ? label.slice(0, 17) + '…' : label;
+              }
+            }
+          }
+        }
+      }
+    });
+    enableTapTooltip(accountChart, accountCanvas, 'nearest');
+
+    // Gastos por Categoría — doughnut, fixed per-category palette per DESIGN.md
+    // §2 "Category Colors" (locked 2026-07-05, hue-distance checked), now on the
+    // left beside the trend line. No legend (round 13) — category identification
+    // is tooltip-only: emoji title + amount/percentage (round 2, point 3). The
+    // itemized list from round 1 is removed entirely — no DOM, no dead CSS/JS for it.
+    var CATEGORY_COLOR = {
+      'Obligación Mamá': '#F472B6',
+      'Obligación Papá': '#4F8EF7',
+      'Vivienda / Arriendo': '#8B5CF6',
+      'Servicios': '#FACC15',
+      'Suscripciones': '#6366F1',
+      'Alimentación': '#22C55E',
+      'Restaurantes / Domicilios': '#FB923C',
+      'Transporte': '#A63F99',
+      'Compras Personales': '#D946EF',
+      'Salud / Bienestar': '#8B1E3F',
+      'Mascotas': '#84CC16',
+      'Viajes': '#0EA5E9',
+      'Ocio / Entretenimiento': '#3EA630',
+      'Imprevistos / Emergencias': '#F59E0B'
+    };
+    // Fallback for any category not in the locked 14 — an unmapped category
+    // (e.g. added directly to the Categories sheet without a matching
+    // DESIGN.md/HTML update, the accepted risk of the Production home decision)
+    // renders in --ink-muted rather than breaking.
+    var categoryColors = dashboardData.expensesByCategory.map(function (row) {
+      return CATEGORY_COLOR[row.category] || token('--ink-muted');
+    });
+    var categoryTotal = dashboardData.expensesByCategory.reduce(function (sum, row) { return sum + row.total; }, 0);
+    var categoryCanvas = document.getElementById('expenses-by-category-chart');
+    var categoryChart = new Chart(categoryCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: dashboardData.expensesByCategory.map(function (row) { return row.category; }),
+        datasets: [{
+          data: dashboardData.expensesByCategory.map(function (row) { return row.total; }),
+          backgroundColor: categoryColors,
+          borderRadius: 6,
+          spacing: 2,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        cutout: '58%', // was 62% — ring thickness (1-cutout) up ~10%: 0.38 -> 0.42
+        // Mouse-only: Chart's own internal hover handler also listens on
+        // touchstart/touchmove by default (intersect:true), and a touchmove
+        // from natural finger jitter mid-tap re-runs that imprecise hit test
+        // and clears whatever our manual touchstart listener below just set —
+        // faster than the eye can see, looks like the tap did nothing. Taking
+        // touch out of Chart's own binding and driving it entirely from our
+        // own listeners (intersect:false) fixes that race. Desktop mouse
+        // hover is untouched — this only changes which events Chart itself
+        // binds to, not our separate addEventListener calls.
+        events: ['mousemove', 'mouseout', 'click'],
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            displayColors: false,
+            callbacks: {
+              title: function (items) {
+                var name = items[0].label;
+                return CATEGORY_EMOJI[name] || name;
+              },
+              label: function (ctx) {
+                var pct = formatPct(ctx.parsed / categoryTotal);
+                return formatCOP(ctx.parsed) + ' (' + pct + ')';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    enableTapTooltip(categoryChart, categoryCanvas, 'nearest');
+
+    // Row 5 — true hide when showPending is false, same as production.
+    // Dates trimmed to day + month, no year (iteration point 5).
+    if (dashboardData.settings.showPending) {
+      // Badge amends D4 same as the pending hero (round 14): pastel amber + black
+      // text at >=1, neutral badge look (existing CSS) at 0 — all viewports.
+      var pendingBadgeEl = document.getElementById('pending-badge');
+      pendingBadgeEl.textContent = dashboardData.pendingCount + (dashboardData.pendingCount === 1 ? ' pendiente' : ' pendientes');
+      if (dashboardData.pendingCount >= 1) pendingBadgeEl.classList.add('badge-pending--active');
+      var tbody = document.getElementById('pending-tbody');
+      dashboardData.pendingRows.forEach(function (row) {
+        var tr = document.createElement('tr');
+        [
+          { value: formatDayMonth(row.transaction_date), className: 'date' },
+          { value: row.merchant, className: '' },
+          { value: row.categoryOrPurpose, className: '' },
+          { value: formatCOP(row.amount), className: 'num' },
+          { value: row.account_from, className: '' }
+        ].forEach(function (cell) {
+          var td = document.createElement('td');
+          td.textContent = cell.value;
+          if (cell.className) td.className = cell.className;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    } else {
+      document.getElementById('pending-section').remove();
+    }
+
+    // Stagger the card mount animation in document order.
+    Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card, i) {
+      card.style.setProperty('--i', i);
+    });
+
+    // Round 14 — mobile carousel dot sync, shared by both tracks. Harmless at
+    // desktop: .carousel-track is display:contents there (not a scroll
+    // container), so no scroll events ever fire.
+    function syncCarouselDots(trackId, dotsId) {
+      var track = document.getElementById(trackId);
+      var dots = document.getElementById(dotsId).children;
+      track.addEventListener('scroll', function () {
+        var index = Math.round(track.scrollLeft / track.clientWidth);
+        for (var i = 0; i < dots.length; i++) {
+          dots[i].classList.toggle('active', i === index);
+        }
+      }, { passive: true });
+    }
+    syncCarouselDots('flujo-track', 'flujo-dots');
+    syncCarouselDots('ahorro-track', 'ahorro-dots');
+  </script>
+</body>
+</html>
