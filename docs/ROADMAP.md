@@ -10,8 +10,8 @@ NO-cambia.
 |---|---|---|
 | 0 | Spike de infraestructura (Access sobre pages.dev) | ✅ CERRADA 2026-07-09 |
 | 1 | Scaffold del monorepo + docs de gobernanza | ✅ CERRADA 2026-07-09 |
-| 2 | Endpoint JSON headless en Apps Script (deployment separado) | 🔵 EN CURSO |
-| 3 | Shell Svelte 5 + mock data en Pages tras Access | ⚪ |
+| 2 | Endpoint JSON headless en Apps Script (deployment separado) | ✅ CERRADA 2026-07-09 |
+| 3 | Shell Svelte 5 + mock data en Pages tras Access | 🔵 EN CURSO |
 | 4 | Datos reales vía Pages Function proxy | ⚪ (gate: ADR-0002 resuelto antes de cerrar) |
 | 5 | Rediseño visual Night Ledger | ⚪ |
 | 6 | Charts (Chart.js) | ⚪ |
@@ -48,6 +48,16 @@ Access sobre producción validado con evidencia de red (cookie
 - **Rollback:** eliminar el deployment nuevo; el webhook no se toca.
 - **NO-cambia:** `doPost` del webhook de Telegram, waterfall de
   clasificación, resumen mensual — NUNCA se tocan.
+
+### Etapa 2 — evidencia de cierre (registrada)
+
+6 commits (`2c44e64`..`10fd47f`) pusheados a `origin/master`. `clasp
+deployments` BEFORE/AFTER: webhook (`@12`) y dashboard v1.0 (`@20`)
+idénticos, un solo deployment nuevo (`@21 "json-api v1 (contract 1.0)"`).
+Batería de evidencia 5/5 contra DATA_CONTRACT.md §3. Integridad de webhook:
+REAL (primera etapa donde aplica). Ver ADR-0010, ADR-0011, ADR-0012 en
+DECISIONS.md (incluye 2 incidentes manejados: `.claspignore` roto,
+rotación de secreto).
 
 ## Etapa 3 — Shell Svelte 5 + mock data en Pages tras Access
 

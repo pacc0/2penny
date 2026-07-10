@@ -125,3 +125,43 @@ el endpoint JSON, desplegado como un deployment NUEVO — excepción
 documentada de la disciplina clasp-deploy ("nunca crear deployment
 nuevo"), que protege endpoints EXISTENTES, no aplica a un endpoint nuevo.
 **Fecha:** 2026-07-09.
+
+## ADR-0012 — Cierre Etapa 2 (endpoint JSON headless)
+
+**Contexto:** Etapa 2 completada task por task según
+`docs/plans/stage-2-json-endpoint-plan.md`.
+**Decisión:** cerrar la Etapa 2, marcar la Etapa 3 como próxima activa.
+**Evidencia:** 6 commits (`2c44e64`..`10fd47f`), pusheados a
+`origin/master`. `clasp deployments` BEFORE/AFTER: 6 → 7 deployments;
+webhook (`...4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W @12`) y dashboard v1.0
+(`...HtY1ivOy_Sq @20`) idénticos antes/después — verificado dos veces
+(durante la Tarea 5 y de nuevo en el cierre); un solo deployment nuevo
+agregado (`...H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF
+@21 "json-api v1 (contract 1.0)"`). Batería de evidencia 5/5: key válida →
+JSON completo validado contra DATA_CONTRACT.md §3 (12 filas en
+`net_flow_series`, sin montos negativos, `error: null`); sin key y con key
+incorrecta → mismo `{"contract_version":"1.0","error":"unauthorized"}`;
+webhook de Telegram vivo (mensaje de prueba llegó a Transactions); dashboard
+v1.0 sigue sirviendo HTML en su versión pinneada. **Integridad de webhook:
+REAL, no N/A** — primera etapa donde esta verificación aplica de verdad.
+
+**Incidentes manejados durante la etapa:**
+1. **`.claspignore` roto (commit `b970c96`).** `clasp push` reportó "Script
+   is already up to date" sin pushear nada; `clasp status` confirmó que
+   `backend/src/` entero quedó como "Untracked". Causa raíz: clasp resuelve
+   los patrones de `.claspignore` relativos a `rootDir` (`src`), no a la
+   raíz del repo — el patrón original (`**/**` + `!src/**`) ignoraba todo.
+   Corregido con patrones relativos a `rootDir` antes de crear el
+   deployment nuevo (Tarea 5). Sin impacto en producción — detectado antes
+   del deploy, no después.
+2. **Rotación de `API_SECRET` a mitad de etapa (reportado por Camilo, NO
+   verificado con evidencia de comando en esta sesión).** Camilo reporta
+   que el secreto fue rotado tras una fuga y que la key vieja/filtrada
+   ahora responde `unauthorized`. Se registra como evidencia narrada de
+   Camilo, no como evidencia verificada por Claude Code — distinción
+   explícita por la regla de evidencia-sobre-narrativa. No bloquea el
+   cierre porque el comportamiento esperado (key inválida → `unauthorized`)
+   ya quedó verificado con evidencia de comando real en la batería 5/5
+   (evidencias 2 y 3, este mismo cierre).
+
+**Fecha:** 2026-07-09.
