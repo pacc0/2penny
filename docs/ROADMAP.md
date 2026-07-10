@@ -11,8 +11,8 @@ NO-cambia.
 | 0 | Spike de infraestructura (Access sobre pages.dev) | ✅ CERRADA 2026-07-09 |
 | 1 | Scaffold del monorepo + docs de gobernanza | ✅ CERRADA 2026-07-09 |
 | 2 | Endpoint JSON headless en Apps Script (deployment separado) | ✅ CERRADA 2026-07-09 |
-| 3 | Shell Svelte 5 + mock data en Pages tras Access | 🔵 EN CURSO |
-| 4 | Datos reales vía Pages Function proxy | ⚪ (gate: ADR-0002 resuelto antes de cerrar) |
+| 3 | Shell Svelte 5 + mock data en Pages tras Access | ✅ CERRADA 2026-07-09 |
+| 4 | Datos reales vía Pages Function proxy | 🔵 EN CURSO (gate: ADR-0002 resuelto antes de cerrar) |
 | 5 | Rediseño visual Night Ledger | ⚪ |
 | 6 | Charts (Chart.js) | ⚪ |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ⚪ (re-evaluar ADR-0004) |
@@ -70,6 +70,19 @@ rotación de secreto).
 - **Rollback:** despublicar el proyecto Pages; v1.0 sigue siendo la
   única fuente real.
 - **NO-cambia:** ningún dato real; solo mocks.
+
+### Etapa 3 — evidencia de cierre (registrada)
+
+9 commits (`aea7951`..`9ccaf9c`) pusheados a `origin/master`. Deploy a
+Cloudflare Pages proyecto `2penny` rama `main`; alias de producción
+`2penny.pages.dev` confirmado protegido por Access (`302`); secciones 1–6
+confirmadas en navegador autenticado; CI `frontend-ci` verde (primer run,
+`29068207599`). Integridad de webhook: verificada de nuevo, sin cambios.
+Ver ADR-0013 en DECISIONS.md — incluye 2 desviaciones aceptadas (Node
+22→24; page shell SSR-per-request en vez de prerender estático) y la
+primera instancia concreta del gap de ADR-0002 (URL de preview con hash
+públicamente alcanzable, solo datos mock por ahora — refuerza el deadline
+de cerrar ese gap antes de cerrar la Etapa 4).
 
 ## Etapa 4 — Datos reales vía Pages Function proxy
 

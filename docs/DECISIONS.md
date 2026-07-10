@@ -165,3 +165,54 @@ REAL, no N/A** — primera etapa donde esta verificación aplica de verdad.
    (evidencias 2 y 3, este mismo cierre).
 
 **Fecha:** 2026-07-09.
+
+## ADR-0013 — Cierre Etapa 3 (shell Svelte 5 + mock proxy)
+
+**Contexto:** Etapa 3 completada task por task según
+`docs/plans/stage-3-svelte-shell-plan.md`.
+**Decisión:** cerrar la Etapa 3, marcar la Etapa 4 como próxima activa.
+**Evidencia:** 9 commits (`aea7951`..`9ccaf9c`), pusheados a
+`origin/master`. Deploy a Cloudflare Pages, proyecto `2penny`, rama `main`
+(`https://b06ac578.2penny.pages.dev`, 14 archivos); alias de producción
+`2penny.pages.dev` confirmado protegido por Access (`curl -sI` → `302` a
+`cloudflareaccess.com`); Camilo confirmó en navegador autenticado: secciones
+1–6 del dashboard renderizan, `/api/dashboard` sirve el mock JSON detrás de
+Access. CI `frontend-ci` corrió por primera vez (path filter ahora aplica) —
+run `29068207599`, verde. **Integridad de webhook: verificada de nuevo**,
+`clasp deployments` — `...4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W @12` idéntico a la
+línea base del cierre de Etapa 2; ningún comando de escritura clasp/backend
+se ejecutó esta etapa.
+
+**Desviaciones del plan ratificado (ambas aceptadas por Camilo):**
+1. **Node 22 → 24.** La máquina de desarrollo corre Node 24, no 22 como
+   originalmente scaffoldeado en Etapa 1 / planeado en el plan de Etapa 3.
+   Corregido bumpeando `frontend-ci.yml` (commit `667bccc`) y enmendando
+   inline la precondición Task 0 del plan de Etapa 3 (commit `2bc81ea`), en
+   vez de fijar el entorno de desarrollo a un runtime obsoleto.
+2. **Prerender.** La Task 2 del plan ratificado fijó `+layout.js` con
+   `prerender = true`, buscando un shell estático. Esto entraba en conflicto
+   directo con la regla de DATA_CONTRACT.md §3 ("live read en cada refresh,
+   sin snapshots cacheados"), porque el `load()` de `+page.js` lee
+   `/api/dashboard` y, sin corrección, habría quedado horneado en HTML
+   estático en tiempo de build. Verificado: antes del fix,
+   `.svelte-kit/output/prerendered/pages/index.html` se generaba; tras
+   agregar `export const prerender = false` en `+page.js`, ese output
+   estático desapareció y la ruta pasó a aparecer en el bundle del
+   worker/servidor (`entries/endpoints/api/dashboard/_server.js`), no como
+   archivo estático. Aceptado porque el shell estático era un medio
+   (velocidad), no un fin, y la regla de live-read del contrato gana. El
+   shell de la página ahora es SSR-por-request, no prerenderizado estático.
+
+**Nota — primera instancia concreta del gap de ADR-0002:** la URL de
+preview con hash de esta etapa (`https://b06ac578.2penny.pages.dev`) es
+públicamente alcanzable SIN protección de Access — confirmado: solo el
+alias de producción `2penny.pages.dev` devolvió `302` de Access; la URL de
+preview con hash respondió `HTTP 200` con el contenido real del mock, sin
+challenge de auth. Hasta ahora el riesgo de ADR-0002 era teórico/aceptado;
+esta etapa lo demuestra con un deployment real. Actualmente solo expone
+datos MOCK (sin datos financieros reales todavía), pero esto refuerza el
+deadline duro de ADR-0002: la segunda política de Access que cubra URLs de
+preview debe resolverse ANTES de cerrar la Etapa 4 — la etapa donde datos
+financieros reales fluirán por primera vez por esta misma superficie de
+preview URLs.
+**Fecha:** 2026-07-09.
