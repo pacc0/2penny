@@ -84,7 +84,7 @@ primera instancia concreta del gap de ADR-0002 (URL de preview con hash
 públicamente alcanzable, solo datos mock por ahora — refuerza el deadline
 de cerrar ese gap antes de cerrar la Etapa 4).
 
-## Etapa 4 — Datos reales vía Pages Function proxy
+## Etapa 4 — Datos reales vía SvelteKit server route proxy
 
 - **Objetivo:** el shell consume el endpoint real de la Etapa 2 a través
   de una Pages Function proxy (secret server-side).
