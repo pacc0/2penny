@@ -121,12 +121,21 @@ responde 200). El contrato de auth se resuelve en dos capas:
   Script Property `API_SECRET`. Sin match → responde
   `{"contract_version":"1.0","error":"unauthorized"}` con HTTP 200 (limitación
   dura de Apps Script).
-- **Capa 2 (Etapa 4, Pages Function):** traduce `error != null` del body al
-  status HTTP real (401/500) antes de que llegue al navegador.
+- **Capa 2 (Etapa 4, server route de SvelteKit `+server.js`):** traduce
+  `error != null` del body al status HTTP real (401/500) antes de que llegue
+  al navegador.
 
 El secreto viaja por query param porque `doGet` no puede leer headers; esto se
-mitiga porque solo la Pages Function, server-side, conoce y llama esa URL —
+mitiga porque solo el server route, server-side, conoce y llama esa URL —
 nunca se expone al cliente del navegador.
+
+**Enmienda aditiva (Etapa 4, sin bump de versión — sigue `"1.0"`):** la capa 2
+introduce un tercer valor de `error`, generado por el proxy mismo (nunca por
+Apps Script): `"upstream"` → HTTP 502. Significa Apps Script inalcanzable,
+timeout (>25s) o respuesta no-JSON. Mapa completo de la capa 2:
+`"unauthorized"` → 401, `"internal"` (u otro `error != null` del backend) →
+500, `"upstream"` → 502, `error: null` → 200. Toda respuesta del proxy lleva
+`Cache-Control: no-store` (regla de live read de esta sección).
 
 ### Restricciones de envelope (ya ratificadas, vigentes)
 
