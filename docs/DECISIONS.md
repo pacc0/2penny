@@ -216,3 +216,56 @@ preview debe resolverse ANTES de cerrar la Etapa 4 — la etapa donde datos
 financieros reales fluirán por primera vez por esta misma superficie de
 preview URLs.
 **Fecha:** 2026-07-09.
+
+## ADR-0014 — Cierre Etapa 4 (datos reales vía server route proxy)
+
+**Contexto:** Etapa 4 completada task por task según
+`docs/plans/stage-4-real-data-plan.md`. Corrección de terminología aplicada
+en HANDOFF.md, ROADMAP.md y DATA_CONTRACT.md: el proxy es un server route
+de SvelteKit (`+server.js`, adapter-cloudflare), no una "Pages Function"
+separada.
+**Decisión:** cerrar la Etapa 4, marcar la Etapa 5 como próxima activa.
+**Evidencia:**
+- **Gate ADR-0002 RESUELTO (Task 1, hard stop):** segunda aplicación de
+  Access con wildcard `*.2penny.pages.dev` creada por Camilo (dashboard,
+  sin tocar la app existente). Verificado:
+  `curl -sI https://b06ac578.2penny.pages.dev` → `HTTP/1.1 302 Found`,
+  `Location: https://2penny-pages.cloudflareaccess.com/...` — capturado dos
+  veces (apertura del gate y cierre de etapa). El wildcard cubre también
+  los hashes nuevos generados durante la etapa (`05a342b7`, `f56010a9`:
+  ambos 302).
+- **Secretos (Task 2):** `APPS_SCRIPT_EXEC_URL` y `API_SECRET` cargados
+  por Camilo vía dashboard (Production, tipo Secret). Resolución de
+  `platform.env` probada por el happy path desplegado (no por narrativa).
+- **Proxy real (Task 3, commit `a91bef7`):** fetch al `/exec` de Etapa 2
+  con secret server-side, timeout 25s (`AbortSignal.timeout`),
+  `Cache-Control: no-store` en toda respuesta. Mapeo:
+  `"unauthorized"` → 401, cualquier otro `error != null` del backend → 500,
+  `"upstream"` (proxy-generado: timeout / red / no-JSON) → 502,
+  `error: null` → 200 passthrough.
+- **Contrato (Task 4, commit `bf9147a`):** enmienda aditiva `"upstream"`
+  en DATA_CONTRACT.md §3, sin bump de versión (sigue `"1.0"`).
+- **Batería (Task 5):** 200 con datos reales en el shell tras Access
+  (observado por Camilo, deployment `f56010a9`); 401 `"unauthorized"`
+  forzado con `API_SECRET` corrupto (deployment `f9e9dc3c`); 502
+  `"upstream"` forzado con URL muerta (deployment `1e07b2d2`); happy path
+  re-verificado tras restaurar (200, datos reales). El modo `"internal"`
+  (500) no es disparable en vivo sin corromper estado del backend —
+  documentado por inspección de código (bindings de `platform.env`
+  ausentes también → 500 `"internal"`). `/api/dashboard` sin autenticar →
+  302 de Access (el proxy no es públicamente alcanzable).
+- **Integridad de webhook:** `clasp deployments` (read-only) al cierre:
+  7 deployments, webhook `...WLNnIxDDeWDvCPMc4e5W @12` idéntico al
+  baseline de Etapa 3. Cero comandos clasp de escritura en la etapa.
+
+**Incidente manejado durante la etapa:** el primer deploy usó
+`--branch=master` (rama git del repo) y aterrizó como **Preview** — la
+rama de producción del proyecto Pages es `main`, no `master`. Producción
+siguió sirviendo el mock de Etapa 3 hasta el re-deploy con
+`--branch=main` (deployment `d0e4ba1d`, verificado `Production` en
+`wrangler pages deployment list`). Landmine registrado: todo
+`wrangler pages deploy` debe llevar `--branch=main`. Nota operativa
+adicional: cambios de secretos en Pages solo aplican en el SIGUIENTE
+deployment (no al guardar), por eso cada toggle de la batería requirió
+re-deploy.
+**Fecha:** 2026-07-11.

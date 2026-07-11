@@ -12,8 +12,8 @@ NO-cambia.
 | 1 | Scaffold del monorepo + docs de gobernanza | ✅ CERRADA 2026-07-09 |
 | 2 | Endpoint JSON headless en Apps Script (deployment separado) | ✅ CERRADA 2026-07-09 |
 | 3 | Shell Svelte 5 + mock data en Pages tras Access | ✅ CERRADA 2026-07-09 |
-| 4 | Datos reales vía Pages Function proxy | 🔵 EN CURSO (gate: ADR-0002 resuelto antes de cerrar) |
-| 5 | Rediseño visual Night Ledger | ⚪ |
+| 4 | Datos reales vía SvelteKit server route proxy | ✅ CERRADA 2026-07-11 |
+| 5 | Rediseño visual Night Ledger | 🔵 EN CURSO |
 | 6 | Charts (Chart.js) | ⚪ |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ⚪ (re-evaluar ADR-0004) |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ⚪ (re-evaluar ADR-0003) |
@@ -87,16 +87,26 @@ de cerrar ese gap antes de cerrar la Etapa 4).
 ## Etapa 4 — Datos reales vía SvelteKit server route proxy
 
 - **Objetivo:** el shell consume el endpoint real de la Etapa 2 a través
-  de una Pages Function proxy (secret server-side).
-- **Entregable:** Pages Function que inyecta el secret y reenvía al
-  `/exec` de la Etapa 2; live read en cada refresh, sin snapshots.
+  de un server route de SvelteKit como proxy (secret server-side).
+- **Entregable:** server route (`+server.js`) que inyecta el secret y
+  reenvía al `/exec` de la Etapa 2; live read en cada refresh, sin
+  snapshots.
 - **Evidencia:** HTTP 200 con datos reales en el shell; HTTP 401 al
   llamar el endpoint sin pasar por el proxy.
-- **Rollback:** apagar la Pages Function; el shell vuelve a mock o queda
-  inaccesible sin afectar v1.0.
+- **Rollback:** revertir el proxy al mock (git history); v1.0 no se
+  afecta.
 - **NO-cambia:** el secreto nunca vive client-side.
 - **Gate de cierre:** ADR-0002 (segunda política de Access para previews)
   debe estar resuelto ANTES de cerrar esta etapa.
+
+**CERRADA 2026-07-11.** Gate ADR-0002 resuelto (wildcard
+`*.2penny.pages.dev`, preview URLs → 302 de Access). Proxy real con mapeo
+401/500/502 (`"upstream"` aditivo, contrato sigue 1.0). Batería completa:
+200 datos reales, 401 y 502 forzados en vivo, `/api/dashboard` no público.
+Ver ADR-0014 en DECISIONS.md — incluye el incidente de deploy
+(`--branch=main` obligatorio: la rama de producción de Pages es `main`,
+no `master`) y la nota de que los secretos solo aplican al siguiente
+deployment.
 
 ## Etapa 5 — Rediseño visual Night Ledger
 
