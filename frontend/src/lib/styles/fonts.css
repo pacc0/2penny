@@ -1,0 +1,26 @@
+/* Self-hosted doctrine fonts (ADR-0016) — 3 files, latin subset only.
+   Family names must match the token stacks in tokens.css verbatim. */
+
+@font-face {
+  font-family: 'Nunito Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 1000;
+  src: url('/fonts/nunito-variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Averia Sans Libre';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/averia-sans-libre-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Averia Sans Libre';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/averia-sans-libre-700.woff2') format('woff2');
+}
