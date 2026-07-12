@@ -290,3 +290,36 @@ patrones y la pregunta de si DESIGN.md §4 admite algún gradiente.
    (asume Tailwind/shadcn y recomienda glassmorphism/gradientes/paletas
    SaaS claras — todos FAIL duro bajo §4).
 **Fecha:** 2026-07-12.
+
+## ADR-0016 — Fuentes self-hosted en Cloudflare Pages (supersede parcial del ADR-0003 legacy)
+
+**Contexto:** la Etapa 5 exige cargar las fuentes de doctrina (Nunito
+Variable, Averia Sans Libre): los tokens `--font-text` / `--font-numeric`
+las nombran pero nada las carga — producción renderiza hoy los fallbacks
+(Trebuchet/Segoe). El ADR-0003 del repo legacy `pacc0/penny` fijó la
+entrega vía CDN jsdelivr y rechazó el self-hosting de woff2 porque Apps
+Script/HtmlService no tiene hosting de assets estáticos.
+**Decisión (ratificada por Camilo 2026-07-12):** self-hostear los woff2 en
+`frontend/static/fonts/` + `@font-face`. Se supersede ÚNICAMENTE el
+mecanismo de entrega del ADR-0003 legacy; la adopción tipográfica (Nunito +
+Averia) queda intacta.
+**Justificación:** la restricción que forzó el CDN es nula en Cloudflare
+Pages — `frontend/static/` es hosting estático nativo y gratuito. El pin a
+jsdelivr fue un second-best forzado por el entorno viejo. Self-host es
+estrictamente mejor en el nuevo: cero dependencia runtime de terceros (las
+fuentes sobreviven una caída de jsdelivr), cero requests a terceros, edge
+cache gratis, same-origin.
+**Alcance:** 3 archivos exactos — Nunito Variable (un variable-file cubre
+500/700), Averia Sans Libre 400 y 700 (la 300 existe pero no se usa: no se
+embarca, cero dead weights). Subset `latin` únicamente (cubre ñ/á/é/í/ó/ú/ü;
+NO latin-ext). `font-display: swap`; preload opcional de la face
+above-the-fold. `@font-face` conecta archivos a los tokens EXISTENTES —
+cero valores de token tocados (Verbatim Token Rule intacta). Assets
+estáticos, no dependencias npm; costo cero.
+**Nota de trazabilidad:** el ADR-0003 supersedido es el del repo LEGACY
+`pacc0/penny` (entrega de fuentes). El ADR-0003 de ESTE repo (clasp con
+cuenta personal) no tiene relación alguna y no se toca. La línea de estado
+"Superseded in part by ADR-0016 (font delivery mechanism)" pertenece al
+DECISIONS.md del legacy, que este repo no edita (ADR-0004: legacy es solo
+consulta) — queda pendiente de Camilo registrarla allá si lo desea.
+**Fecha:** 2026-07-12.
