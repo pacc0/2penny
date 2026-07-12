@@ -84,9 +84,16 @@ solo vale para el valor único de una hero/KPI card).
 Dos breakpoints heredados de la doctrina legacy: **768px** y **480px**
 (single user, tres contextos: desktop, tablet/phone-landscape,
 phone-portrait). Dispositivo de referencia para el contexto más ajustado:
-Samsung Galaxy A56 5G (395×893 CSS viewport). Nota: los detalles de layout
-(grids, filas, carousels) se re-derivan en la Etapa 5; aquí solo se hereda
-la doctrina de breakpoints, no la implementación de layout legacy.
+Samsung Galaxy A56 5G (395×893 CSS viewport).
+
+**Re-derivación de Etapa 5 (ratificada por Camilo 2026-07-12):** el layout
+responsive es estático/compacto — grid de KPIs 4-up (≥769px) → 2×2 (≤768px)
+→ 1-up o 2-up compacto (≤480px). Los scroll-snap carousels del legacy en
+≤480px y el fold del pending-hero al badge NO se heredan: el nuevo shell no
+tiene pending-hero (pendientes es una sección ledger con empty state "al
+día", decisión C del plan de Etapa 5). Contenido ancho (tabla de 12 meses)
+scrollea horizontal dentro de su propio contenedor; el body de la página
+nunca scrollea horizontal.
 
 ## §4 Anti-slop / Taste
 
