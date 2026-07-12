@@ -3,6 +3,15 @@
 
 	/** @type {{ data: { payload: Promise<import('$lib/contract.js').DashboardContract> } }} */
 	let { data } = $props();
+
+	// ≤480px carousel dot sync (legacy DashboardPage.html Round 14 pattern).
+	// Harmless at desktop: the track is display:contents there, never scrolls.
+	let activeSlide = $state(0);
+	/** @param {Event} e */
+	function syncDots(e) {
+		const t = /** @type {HTMLElement} */ (e.currentTarget);
+		activeSlide = Math.round(t.scrollLeft / t.clientWidth);
+	}
 </script>
 
 {#snippet errorState(/** @type {string} */ code)}
@@ -33,13 +42,22 @@
 		</header>
 
 		<section class="kpis">
-			{#each Array(4) as _, i (i)}
-				<div class="kpi">
-					<span class="label"><span class="ghost ghost-label">&nbsp;</span></span>
-					<span class="hero"><span class="ghost ghost-value">&nbsp;</span></span>
-					<span class="delta"><span class="ghost ghost-delta">&nbsp;</span></span>
+			<div class="carousel-wrap">
+				<div class="carousel-track" onscroll={syncDots}>
+					{#each Array(4) as _, i (i)}
+						<div class="kpi">
+							<span class="label"><span class="ghost ghost-label">&nbsp;</span></span>
+							<span class="hero"><span class="ghost ghost-value">&nbsp;</span></span>
+							<span class="delta"><span class="ghost ghost-delta">&nbsp;</span></span>
+						</div>
+					{/each}
 				</div>
-			{/each}
+				<div class="carousel-dots" aria-hidden="true">
+					{#each Array(4) as _, i (i)}
+						<span class="dot" class:active={i === activeSlide}></span>
+					{/each}
+				</div>
+			</div>
 		</section>
 
 		<section>
@@ -62,21 +80,23 @@
 
 		<section>
 			<h2>Flujo neto — últimos 12 meses</h2>
-			<table>
-				<thead>
-					<tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Neto</th></tr>
-				</thead>
-				<tbody>
-					{#each Array(12) as _, i (i)}
-						<tr>
-							<td><span class="ghost">&nbsp;</span></td>
-							<td><span class="ghost">&nbsp;</span></td>
-							<td><span class="ghost">&nbsp;</span></td>
-							<td><span class="ghost">&nbsp;</span></td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
+			<div class="table-scroll">
+				<table>
+					<thead>
+						<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
+					</thead>
+					<tbody>
+						{#each Array(12) as _, i (i)}
+							<tr>
+								<td><span class="ghost">&nbsp;</span></td>
+								<td><span class="ghost">&nbsp;</span></td>
+								<td><span class="ghost">&nbsp;</span></td>
+								<td><span class="ghost">&nbsp;</span></td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		</section>
 
 		<section>
@@ -110,22 +130,31 @@
 				{ label: 'Ahorro', value: payload.kpis.savings.month, d: payload.kpis.savings.month - payload.kpis.savings.monthly_goal, favorableUp: true, note: 'vs meta' }
 			]}
 			<section class="kpis">
-				{#each deltas as card (card.label)}
-					{@const favorable = card.favorableUp ? card.d >= 0 : card.d <= 0}
-					<div class="kpi">
-						<span class="label">{card.label}</span>
-						<span class="hero">{fmt(card.value)}</span>
-						<span class="delta" class:favorable class:unfavorable={!favorable}>
-							{#if card.d >= 0}
-								<svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true"><path d="M4 1l3.5 6h-7z" fill="currentColor" /></svg>
-							{:else}
-								<svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true"><path d="M4 7L0.5 1h7z" fill="currentColor" /></svg>
-							{/if}
-							{card.d >= 0 ? '+' : '−'}{fmt(Math.abs(card.d))}
-							<span class="delta-note">{card.note}</span>
-						</span>
+				<div class="carousel-wrap">
+					<div class="carousel-track" onscroll={syncDots}>
+						{#each deltas as card (card.label)}
+							{@const favorable = card.favorableUp ? card.d >= 0 : card.d <= 0}
+							<div class="kpi">
+								<span class="label">{card.label}</span>
+								<span class="hero">{fmt(card.value)}</span>
+								<span class="delta" class:favorable class:unfavorable={!favorable}>
+									{#if card.d >= 0}
+										<svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true"><path d="M4 1l3.5 6h-7z" fill="currentColor" /></svg>
+									{:else}
+										<svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true"><path d="M4 7L0.5 1h7z" fill="currentColor" /></svg>
+									{/if}
+									{card.d >= 0 ? '+' : '−'}{fmt(Math.abs(card.d))}
+									<span class="delta-note">{card.note}</span>
+								</span>
+							</div>
+						{/each}
 					</div>
-				{/each}
+					<div class="carousel-dots" aria-hidden="true">
+						{#each Array(4) as _, i (i)}
+							<span class="dot" class:active={i === activeSlide}></span>
+						{/each}
+					</div>
+				</div>
 			</section>
 
 			<section>
@@ -148,21 +177,23 @@
 
 			<section>
 				<h2>Flujo neto — últimos 12 meses</h2>
-				<table>
-					<thead>
-						<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
-					</thead>
-					<tbody>
-						{#each payload.net_flow_series as row (row.month)}
-							<tr>
-								<td>{row.month}</td>
-								<td class="value num">{fmt(row.income)}</td>
-								<td class="value num">{fmt(row.expenses)}</td>
-								<td class="value num">{fmt(row.net_flow)}</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+				<div class="table-scroll">
+					<table>
+						<thead>
+							<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
+						</thead>
+						<tbody>
+							{#each payload.net_flow_series as row (row.month)}
+								<tr>
+									<td>{row.month}</td>
+									<td class="value num">{fmt(row.income)}</td>
+									<td class="value num">{fmt(row.expenses)}</td>
+									<td class="value num">{fmt(row.net_flow)}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</section>
 
 			<section>
@@ -268,6 +299,7 @@
 	}
 
 	.kpi {
+		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-xs);
@@ -372,6 +404,99 @@
 	/* Numeric headers sit right-aligned over their numeric columns. */
 	.num {
 		text-align: right;
+	}
+
+	/* Wide content scrolls inside its own container; the page body never
+	   scrolls horizontally (DESIGN.md §3). */
+	.table-scroll {
+		overflow-x: auto;
+	}
+
+	/* ≤480px carousel, desktop default "not there" (legacy Round 14):
+	   display:contents unwraps wrap/track so the KPI cards stay direct
+	   grid children of .kpis. */
+	.carousel-wrap,
+	.carousel-track {
+		display: contents;
+	}
+
+	.carousel-dots {
+		display: none;
+	}
+
+	/* ≤768px: spacing steps down one token; KPI grid stays 2×2. */
+	@media (max-width: 768px) {
+		main {
+			padding: var(--spacing-md) var(--spacing-sm) var(--spacing-lg);
+		}
+
+		section {
+			margin-bottom: var(--spacing-lg);
+		}
+
+		.kpis {
+			gap: var(--spacing-sm);
+		}
+	}
+
+	/* ≤480px: KPI cards become the legacy scroll-snap carousel
+	   (DESIGN.md §3 as re-amended 2026-07-12; reference implementation
+	   backend/src/DashboardPage.html Rounds 13–15). */
+	@media (max-width: 480px) {
+		.kpis {
+			grid-template-columns: 1fr;
+		}
+
+		/* Round 15 fix: min-width:0 so the wrap respects the 1fr column
+		   instead of inheriting the nowrap track's min-content width. */
+		.carousel-wrap {
+			display: block;
+			min-width: 0;
+		}
+
+		.carousel-track {
+			display: flex;
+			min-width: 0;
+			overflow-x: auto;
+			scroll-snap-type: x mandatory;
+			scrollbar-width: none;
+		}
+
+		.carousel-track::-webkit-scrollbar {
+			display: none;
+		}
+
+		.kpi {
+			flex: 0 0 100%;
+			width: 100%;
+			scroll-snap-align: center;
+		}
+
+		.carousel-dots {
+			display: flex;
+			justify-content: center;
+			gap: var(--spacing-sm);
+			margin-top: var(--spacing-sm);
+		}
+
+		/* 7px dot: legacy reference dimension (glyph-scale, not a spacing
+		   token concern). */
+		.dot {
+			width: 7px;
+			height: 7px;
+			border-radius: var(--rounded-pill);
+			background: var(--ink-muted);
+		}
+
+		.dot.active {
+			background: var(--progress-amber);
+		}
+
+		/* Table keeps readable columns and scrolls inside .table-scroll. */
+		table {
+			min-width: 480px;
+			font-size: 0.875rem;
+		}
 	}
 
 	/* Skeleton ghosts — static bar on --surface; shimmer is a pure-luminance
