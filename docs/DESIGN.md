@@ -86,14 +86,20 @@ Dos breakpoints heredados de la doctrina legacy: **768px** y **480px**
 phone-portrait). Dispositivo de referencia para el contexto más ajustado:
 Samsung Galaxy A56 5G (395×893 CSS viewport).
 
-**Re-derivación de Etapa 5 (ratificada por Camilo 2026-07-12):** el layout
-responsive es estático/compacto — grid de KPIs 4-up (≥769px) → 2×2 (≤768px)
-→ 1-up o 2-up compacto (≤480px). Los scroll-snap carousels del legacy en
-≤480px y el fold del pending-hero al badge NO se heredan: el nuevo shell no
-tiene pending-hero (pendientes es una sección ledger con empty state "al
-día", decisión C del plan de Etapa 5). Contenido ancho (tabla de 12 meses)
-scrollea horizontal dentro de su propio contenedor; el body de la página
-nunca scrollea horizontal.
+**Re-derivación de Etapa 5 (ratificada por Camilo 2026-07-12; revisada por
+Camilo en la sesión de ejecución del mismo día — carousel confirmado):**
+grid de KPIs 4-up (≥769px) → 2×2 (≤768px) → en **≤480px las KPI cards SÍ
+heredan el carousel scroll-snap del legacy** (implementación de referencia:
+`backend/src/DashboardPage.html`, UI-3 Rounds 13–15): track flex con
+`overflow-x: auto` + `scroll-snap-type: x mandatory`, un slide por página
+(`flex: 0 0 100%`, `scroll-snap-align: center`), scrollbar oculto, dots
+indicadores debajo (`--ink-muted`; activo `--progress-amber`), wrap con
+`min-width: 0` para no reventar la columna (fix Round 15). El fold del
+pending-hero al badge NO se hereda: el nuevo shell no tiene pending-hero
+(pendientes es una sección ledger con empty state "al día", decisión C del
+plan de Etapa 5). Contenido ancho (tabla de 12 meses) scrollea horizontal
+dentro de su propio contenedor; el body de la página nunca scrollea
+horizontal.
 
 ## §4 Anti-slop / Taste
 

@@ -1,8 +1,10 @@
 # Stage 5 Plan — Night Ledger visual redesign (shell only)
 
-Status: DRAFT v3 — decisions A/B/C/D ratified in-session (2026-07-12,
-ADR-0016 for B; DESIGN.md §3 amendment for D). Awaiting Camilo ratification
-of the plan itself. No task executes before ratification.
+Status: RATIFIED v4 — decisions A/B/C ratified in-session (2026-07-12,
+ADR-0016 for B). Decision D REVISED by Camilo at execution-session gate
+(2026-07-12): legacy ≤480px carousel IS inherited (DESIGN.md §3 amended
+accordingly). Focus ring confirmed: neutral `--ink`. Both pending
+confirmations resolved — execution authorized from Task 0.
 
 ## Scope
 
@@ -40,15 +42,16 @@ task. Every `wrangler pages deploy` carries `--branch=main`.
   "at most 1 CTA; resolved/caught-up states carry zero" — this is the
   correct application of the pattern, NOT a deviation. Copy: positive,
   present-tense, no nudge to spend (final wording is Camilo's).
-- **D — Responsive re-derivation ratified (DESIGN.md §3 amendment,
-  2026-07-12).** Static/compact grids at all breakpoints. The legacy
-  ≤480px scroll-snap carousels and the pending-hero → badge fold are NOT
-  inherited (no pending-hero exists in the new shell). Task 8 implements
-  §3 as amended — it does not silently supersede doctrine. Note: this
-  repo's DESIGN.md §1 never contained the carousel paragraph (grep
-  verified); the mandate lived in the legacy doc, and §3 already delegated
-  layout re-derivation to Stage 5 — the amendment makes the resolution
-  explicit.
+- **D (REVISED at execution gate, Camilo 2026-07-12) — Legacy ≤480px
+  carousel IS inherited (DESIGN.md §3 re-amended).** KPI cards at ≤480px
+  render as the legacy scroll-snap carousel — reference implementation
+  `backend/src/DashboardPage.html` (UI-3 Rounds 13–15): flex track,
+  `overflow-x: auto`, `scroll-snap-type: x mandatory`, one slide per page
+  (`flex: 0 0 100%`, `scroll-snap-align: center`), hidden scrollbar, dot
+  indicators (`--ink-muted`, active `--progress-amber`), wrap
+  `min-width: 0` (Round 15 overflow fix). The pending-hero → badge fold
+  remains NOT inherited (no pending-hero exists in the new shell). Task 8
+  implements §3 as re-amended.
 
 ## Assumption to verify in-task
 
@@ -124,8 +127,7 @@ Screenshot: docs/evidence/stage-5/task2-fonts.png
   `font-family: var(--font-text)`; global
   `:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }`
   (ring not color-shift; neutral `--ink` keeps every hue financially
-  semantic per §1 — flagged default, Camilo may switch to
-  `--savings-teal` at ratification).
+  semantic per §1 — CONFIRMED by Camilo at execution gate, 2026-07-12).
 - `frontend/src/routes/+layout.svelte`: import base.css.
 - `frontend/src/routes/+page.svelte`: header block restyled — `h1` +
   period line (`--ink-muted`), container `max-width` kept, page gutters via
@@ -234,22 +236,32 @@ grep rendered error markup for 'script.google|APPS_SCRIPT|key=' → 0 matches
 
 ## Task 8 — Responsive (768 / 480, A56 reference)
 
-Implements DESIGN.md §3 as amended 2026-07-12 (decision D — static/compact,
-no carousels, no pending-hero fold).
+Implements DESIGN.md §3 as re-amended 2026-07-12 (decision D revised —
+legacy carousel at ≤480px; no pending-hero fold).
 
 - `frontend/src/routes/+page.svelte` media queries:
   - ≥769px: KPI grid 4-up (or 2×2 — pick by density at build time).
   - ≤768px: KPI grid 2×2; spacing steps down one token.
-  - ≤480px: KPI grid 1-up or 2-up compact; 12-month table wrapped in
-    `overflow-x: auto` container (page body never scrolls horizontally).
+  - ≤480px: KPI cards become the legacy scroll-snap carousel (reference:
+    `backend/src/DashboardPage.html` Rounds 13–15 — flex track,
+    `overflow-x: auto`, `scroll-snap-type: x mandatory`, slides
+    `flex: 0 0 100%` + `scroll-snap-align: center`, hidden scrollbar, dots
+    `--ink-muted`/active `--progress-amber`, wrap `min-width: 0`; desktop
+    default `display: contents` so the wrap vanishes at ≥481px). Dot sync:
+    minimal scroll listener as in the legacy page. 12-month table wrapped
+    in `overflow-x: auto` container (page body never scrolls
+    horizontally).
 
 **VERIFICATION**
 ```
 Playwright MCP browser tooling (dev-environment plugin, verified NOT an
 npm dependency — frontend/package.json untouched, "no new deps" intact):
 viewport 395×893 (Galaxy A56): full-page screenshot, no horizontal body
-scroll — docs/evidence/stage-5/task8-a56.png
-Also 768×1024 and 1280×800 screenshots.
+scroll, KPI carousel shows ONE slide per page with dots visible —
+docs/evidence/stage-5/task8-a56.png; programmatic scroll of the track →
+active dot advances (second screenshot task8-a56-slide2.png).
+Also 768×1024 and 1280×800 screenshots (no carousel at those widths —
+wrap is display:contents).
 ```
 
 ## Task 9 — Accessibility & contrast battery
