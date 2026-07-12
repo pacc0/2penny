@@ -14,7 +14,7 @@ NO-cambia.
 | 3 | Shell Svelte 5 + mock data en Pages tras Access | ✅ CERRADA 2026-07-09 |
 | 4 | Datos reales vía SvelteKit server route proxy | ✅ CERRADA 2026-07-11 |
 | 5 | Rediseño visual Night Ledger | ✅ CERRADA 2026-07-12 |
-| 6 | Charts (Chart.js) | 🔵 EN CURSO |
+| 6 | Charts (Chart.js) | 🟡 EN INICIACIÓN — plan pendiente de ratificación |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ⚪ (re-evaluar ADR-0004) |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ⚪ (re-evaluar ADR-0003) |
 
