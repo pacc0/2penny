@@ -118,8 +118,11 @@ horizontal.
   matiz (hue) siguen siendo FAIL duro; los decorativos de cualquier color
   saturado, también. Glassmorphism / `backdrop-filter`: FAIL duro SIN
   excepciones, incluidos sticky headers (ADR-0015).
-- **Mandatos:** cifras con `tabular-nums`; monospace en columnas
-  numéricas/ledger; alto contraste, densidad profesional estética
+- **Mandatos:** cifras con `tabular-nums`; columnas numéricas/ledger usan
+  `var(--font-text)` (Nunito) + `font-variant-numeric: tabular-nums` — sin
+  monospace; `var(--font-numeric)` (Averia, proporcional — spike del
+  ADR-0003 legacy) queda reservada para la cifra única de una hero/KPI card
+  (decisión A, Etapa 5); alto contraste, densidad profesional estética
   terminal/ledger; jerarquía por tamaño/peso/espacio, no por ruido de
   color. Anclas positivas: densidad terminal/ledger, densidad informativa
   tipo Bloomberg, contención tipo Linear/Vercel.
