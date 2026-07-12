@@ -11,3 +11,4 @@ build/
 # local work files
 stage0-docs/
 *.zip
+.playwright-mcp/
