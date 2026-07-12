@@ -323,3 +323,90 @@ cuenta personal) no tiene relación alguna y no se toca. La línea de estado
 DECISIONS.md del legacy, que este repo no edita (ADR-0004: legacy es solo
 consulta) — queda pendiente de Camilo registrarla allá si lo desea.
 **Fecha:** 2026-07-12.
+
+## ADR-0017 — Cierre Etapa 5 (rediseño visual Night Ledger)
+
+**Contexto:** Etapa 5 ejecutada task por task según
+`docs/plans/stage-5-night-ledger-plan.md` v4 (`318678a`). Las dos
+confirmaciones pendientes del gate se resolvieron en la sesión de
+ejecución: **decisión D REVISADA** (el carousel scroll-snap del legacy en
+≤480px SÍ se hereda — DESIGN.md §3 re-enmendado; implementación de
+referencia `backend/src/DashboardPage.html` Rounds 13–15) y focus ring
+confirmado en `--ink` neutro.
+**Decisión:** cerrar la Etapa 5, marcar la Etapa 6 (Charts) como próxima
+activa.
+**Evidencia:**
+- **Commits de etapa:** `318678a`..`dc3dd0a` (12 commits, uno por task más
+  gate/evidencia), pusheados a `origin/master`.
+- **Fuentes (Task 2, ADR-0016):** exactamente 3 woff2 latin en
+  `frontend/static/fonts/` (37.6/38.3/39.1 KB, magic `wOF2` verificado);
+  `GET /fonts/nunito-variable.woff2` → 200; font-family computada en
+  `main` → `"Nunito Variable"`; preload con `crossorigin`.
+- **Skeleton streaming (Task 4):** `+page.js` retorna la promesa sin
+  await (`prerender = false` intacto, un solo fetch por request); CLS del
+  swap = **0** (PerformanceObserver, cero entradas layout-shift) tras
+  line-height explícito (line boxes inmunes al font swap) y
+  `table-layout: fixed`.
+- **KPI heroes (Task 5):** supuesto `net_flow_series[11].month ===
+  period.month` demostrado por construcción en `backend/src/Api.js`
+  (mismo `todayIso` genera ambos) y verificado en payload en vivo
+  (`assumptionHolds: true`). Gradiente de luminancia con extremos
+  `--surface-raised`→`--surface` (ADR-0015); grep del diff: cero
+  `box-shadow|backdrop-filter|blur`.
+- **Ledger (Task 6):** columnas numéricas en Nunito + `tabular-nums`
+  (decisión A, sin monospace); todo monto coloreado lleva signo explícito;
+  cero zebra; hairlines únicos.
+- **Estados (Task 7, decisión C):** empty de pendientes con CERO CTA
+  (grep del bloque: 0 anchors/buttons); errores renderizan el valor de
+  contrato verbatim (`upstream` 502 vía socket muerto, `unauthorized` 401)
+  con `--alert-red` solo en la palabra de estado; cero fugas
+  (`script.google|APPS_SCRIPT|key=`: 0 hits en markup renderizado).
+- **Responsive (Task 8, decisión D revisada):** A56 395×893 — slide
+  364px = viewport del track (1 slide por página), sin scroll horizontal
+  del body (medido `false`), dot activo avanza 0→1 con scroll
+  programático; 768/1024 y 1280/800 — track `display: contents`, dots
+  `none`. Tabla de 12 meses scrollea dentro de `.table-scroll`.
+- **Contraste/a11y (Task 9):** 13/13 pares WCAG PASS computados (peor:
+  `--alert-red`/`--bg` 5.23:1 ≥ 4.5); ring de 2px `--ink` visible en las
+  dos regiones scrolleables enfocables por teclado
+  (`docs/evidence/stage-5/task9-contrast.txt`).
+- **Deploy (Task 10):** `npm run check` 0 errores, `npm run build` exit 0;
+  deployment `72a5dcdc` **Production**, branch `main` (ADR-0014
+  respetado); `curl -sI` → 302 Cloudflare Access en `2penny.pages.dev` y
+  en `72a5dcdc.2penny.pages.dev` (wildcard intacto); CI `frontend-ci`
+  verde (run `29206387119`); datos reales confirmados por Camilo en
+  navegador autenticado (dispositivo de referencia incluido).
+- **Integridad de webhook:** `clasp deployments` (read-only) al cierre:
+  7 deployments idénticos al baseline de Etapa 4 — webhook
+  `...WLNnIxDDeWDvCPMc4e5W @12` y json-api `@21` sin cambios. Cero
+  comandos clasp de escritura en la etapa (el mock de desarrollo fue un
+  server Node local en `127.0.0.1:8788`; ningún deployment de Apps Script
+  creado por ningún medio).
+- **Gaps de gobernanza pre-cierre (resueltos con evidencia):**
+  `frontend/.dev.vars` contiene solo dummies (`127.0.0.1:8788` +
+  `dev-mock`), nunca entró a la historia (`git log --all` vacío,
+  `.gitignore:9`); `git diff 160cc25..dc3dd0a -- frontend/package.json`
+  vacío (cero dependencias npm nuevas, lockfile incluido); el fold del
+  pending-hero NO tiene equivalente en el nuevo shell (no existe
+  pending-hero; registrado en DESIGN.md §3 línea 98 y plan v4, `318678a`).
+
+**Notas operativas:**
+1. **Junction de Chrome (tooling, reversible):** Playwright MCP exige
+   Chrome en `%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe`; la
+   máquina no tiene Chrome/Edge y el instalador del sistema pide admin.
+   Se creó una junction NTFS
+   `%LOCALAPPDATA%\Google\Chrome\Application` →
+   `%LOCALAPPDATA%\ms-playwright\chromium-1228\chrome-win64` (Chrome for
+   Testing 149, cache de usuario, sin admin, costo cero). Reversión:
+   `Remove-Item "$env:LOCALAPPDATA\Google\Chrome\Application"` (borra solo
+   la junction). Quitarla antes de instalar Chrome real.
+2. **`npm run check` no gatea en `frontend-ci.yml` (candidato a backlog,
+   NO se cierra en esta etapa):** descubierto en Task 4 — el HEAD de
+   Etapa 4 traía 3 errores de svelte-check (2× tipado `Platform.env` en
+   `+server.js`, 1 implicit-any) con CI verde (`29068207599`), demostrado
+   con stash-run de `npm run check` sobre HEAD limpio. Corregido en etapa
+   vía declaración `App.Platform.env` en `app.d.ts` (`878d105`); check
+   ahora 0 errores. Añadir check como gate de CI queda como candidato de
+   backlog para una etapa futura (fuera de alcance aquí).
+
+**Fecha:** 2026-07-12.

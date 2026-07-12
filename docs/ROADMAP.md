@@ -13,8 +13,8 @@ NO-cambia.
 | 2 | Endpoint JSON headless en Apps Script (deployment separado) | ✅ CERRADA 2026-07-09 |
 | 3 | Shell Svelte 5 + mock data en Pages tras Access | ✅ CERRADA 2026-07-09 |
 | 4 | Datos reales vía SvelteKit server route proxy | ✅ CERRADA 2026-07-11 |
-| 5 | Rediseño visual Night Ledger | 🔵 EN CURSO |
-| 6 | Charts (Chart.js) | ⚪ |
+| 5 | Rediseño visual Night Ledger | ✅ CERRADA 2026-07-12 |
+| 6 | Charts (Chart.js) | 🔵 EN CURSO |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ⚪ (re-evaluar ADR-0004) |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ⚪ (re-evaluar ADR-0003) |
 
@@ -117,6 +117,21 @@ deployment.
 - **Evidencia:** screenshots desktop + Galaxy A56 5G viewport (395×893).
 - **Rollback:** revert de los commits de UI; datos y proxy no se tocan.
 - **NO-cambia:** ningún token inventado fuera de DESIGN.md.
+
+### Etapa 5 — evidencia de cierre (registrada)
+
+12 commits (`318678a`..`dc3dd0a`) pusheados a `origin/master`, uno por
+task del plan v4. Deployment `72a5dcdc` Production/`main`; 302 de Access
+en producción y en el hash nuevo (wildcard intacto); CI `frontend-ci`
+verde (`29206387119`); datos reales confirmados por Camilo en navegador
+autenticado y dispositivo de referencia. Decisión D revisada en el gate de
+ejecución: carousel legacy heredado en ≤480px (DESIGN.md §3 re-enmendado).
+CLS del swap de skeleton = 0 medido; batería de contraste 13/13 PASS;
+integridad de webhook re-verificada (`@12`/`@21` idénticos, cero clasp de
+escritura). Cero dependencias npm nuevas (diff de package.json vacío).
+Ver ADR-0017 en DECISIONS.md — incluye las 2 notas operativas (junction de
+Chrome para Playwright MCP; gap de `npm run check` sin gate en CI como
+candidato de backlog).
 
 ## Etapa 6 — Charts (Chart.js)
 
