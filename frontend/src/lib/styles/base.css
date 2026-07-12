@@ -1,0 +1,17 @@
+/* Base shell — Night Ledger doctrine (DESIGN.md §1/§4).
+   Background lives on body: edge-to-edge --bg, no chrome (ADR-0015:
+   gradients on cards only, never on --bg). */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-text);
+}
+
+/* Focus doctrine: ring, not color-shift. Neutral --ink keeps every hue
+   financially semantic (§1; confirmed by Camilo 2026-07-12). */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

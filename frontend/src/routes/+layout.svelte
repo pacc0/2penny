@@ -2,6 +2,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import '$lib/styles/tokens.css';
 	import '$lib/styles/fonts.css';
+	import '$lib/styles/base.css';
 
 	let { children } = $props();
 </script>

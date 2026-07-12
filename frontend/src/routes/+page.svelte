@@ -94,18 +94,23 @@
 	main {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: var(--spacing-lg);
-		font-family: var(--font-text);
-		color: var(--ink);
-		background: var(--bg);
+		padding: var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
 	}
 
 	header {
 		margin-bottom: var(--spacing-lg);
 	}
 
+	h1 {
+		margin: 0;
+		font-size: 1.5rem;
+		line-height: 1.2;
+	}
+
 	.period {
+		margin: var(--spacing-xs) 0 0;
 		color: var(--ink-muted);
+		font-size: 0.875rem;
 	}
 
 	.error {
