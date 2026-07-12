@@ -5,6 +5,24 @@
 	let { data } = $props();
 </script>
 
+{#snippet errorState(/** @type {string} */ code)}
+	<!-- Error restraint (Task 7): title + one line naming the contract
+	     error value verbatim; --alert-red on the status word only. The
+	     proxy never forwards upstream URL/body, so nothing secret can
+	     render here. -->
+	<div class="state">
+		<svg class="state-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+			<path d="M8 1.5 15 14H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+			<path d="M8 6v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+			<circle cx="8" cy="12" r="0.9" fill="currentColor" />
+		</svg>
+		<div>
+			<p class="state-title">No se pudo cargar el tablero</p>
+			<p class="state-line">El servidor respondió <span class="error-word">{code}</span>.</p>
+		</div>
+	</div>
+{/snippet}
+
 <main>
 	{#await data.payload}
 		<!-- Skeleton mirrors the real layout (zero CLS): header, 4 KPI ghost
@@ -72,7 +90,7 @@
 	{:then payload}
 		{@const fmt = (/** @type {number} */ amount) => formatCurrency(amount, payload.period.currency)}
 		{#if payload.error}
-			<p class="error">Error: {payload.error}</p>
+			{@render errorState(payload.error)}
 		{:else}
 			<header>
 				<h1>2penny</h1>
@@ -150,7 +168,18 @@
 			<section>
 				<h2>Pendientes</h2>
 				{#if payload.pending.length === 0}
-					<p>sin pendientes</p>
+					<!-- Decision C: caught-up state carries ZERO CTA — Pending
+					     only comes from Gmail import; a Telegram CTA would be
+					     a false affordance. Copy is Camilo's to finalize. -->
+					<div class="state">
+						<svg class="state-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+							<path d="M3 8.5l3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+						<div>
+							<p class="state-title">Todo al día</p>
+							<p class="state-line">No hay transacciones pendientes de confirmar.</p>
+						</div>
+					</div>
 				{:else}
 					<ul>
 						{#each payload.pending as row (row.id)}
@@ -166,7 +195,7 @@
 			</section>
 		{/if}
 	{:catch}
-		<p class="error">Error: upstream</p>
+		{@render errorState('upstream')}
 	{/await}
 </main>
 
@@ -193,7 +222,33 @@
 		font-size: 0.875rem;
 	}
 
-	.error {
+	/* Empty/error states: functional SVG + title + one line, no CTA. */
+	.state {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--spacing-sm);
+		padding: var(--spacing-md) 0;
+	}
+
+	.state-icon {
+		flex-shrink: 0;
+		margin-top: var(--spacing-xs);
+		color: var(--ink-muted);
+	}
+
+	.state-title {
+		margin: 0;
+		font-weight: 700;
+	}
+
+	.state-line {
+		margin: var(--spacing-xs) 0 0;
+		font-size: 0.875rem;
+		color: var(--ink-muted);
+	}
+
+	/* Contract error value only — never a URL, never a body. */
+	.error-word {
 		color: var(--alert-red);
 	}
 
