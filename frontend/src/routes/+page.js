@@ -4,9 +4,12 @@
 export const prerender = false;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch }) {
-  const res = await fetch('/api/dashboard');
-  /** @type {import('$lib/contract.js').DashboardContract} */
-  const payload = await res.json();
-  return { payload };
+export function load({ fetch }) {
+  // Streamed: the promise is returned unawaited so the shell renders
+  // immediately and {#await} shows the skeleton. Still one real fetch
+  // per request; proxy stays no-store.
+  return {
+    /** @type {Promise<import('$lib/contract.js').DashboardContract>} */
+    payload: fetch('/api/dashboard').then((res) => res.json())
+  };
 }
