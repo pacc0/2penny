@@ -114,7 +114,7 @@
 				<h2>Gastos por categoría</h2>
 				<ul>
 					{#each payload.expenses_by_category as row (row.category)}
-						<li><span>{row.category}</span><span class="value">{fmt(row.amount)}</span></li>
+						<li><span>{row.category}</span><span class="value expense-amt">−{fmt(row.amount)}</span></li>
 					{/each}
 				</ul>
 			</section>
@@ -123,7 +123,7 @@
 				<h2>Gastos por cuenta</h2>
 				<ul>
 					{#each payload.expenses_by_account as row (row.account)}
-						<li><span>{row.account}</span><span class="value">{fmt(row.amount)}</span></li>
+						<li><span>{row.account}</span><span class="value expense-amt">−{fmt(row.amount)}</span></li>
 					{/each}
 				</ul>
 			</section>
@@ -132,15 +132,15 @@
 				<h2>Flujo neto — últimos 12 meses</h2>
 				<table>
 					<thead>
-						<tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Neto</th></tr>
+						<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
 					</thead>
 					<tbody>
 						{#each payload.net_flow_series as row (row.month)}
 							<tr>
 								<td>{row.month}</td>
-								<td class="value">{fmt(row.income)}</td>
-								<td class="value">{fmt(row.expenses)}</td>
-								<td class="value">{fmt(row.net_flow)}</td>
+								<td class="value num">{fmt(row.income)}</td>
+								<td class="value num">{fmt(row.expenses)}</td>
+								<td class="value num">{fmt(row.net_flow)}</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -156,7 +156,9 @@
 						{#each payload.pending as row (row.id)}
 							<li>
 								<span>{row.date} · {row.merchant} · {row.description}</span>
-								<span class="value">{fmt(row.amount)}</span>
+								<span class="value {row.type === 'income' ? 'income-amt' : 'expense-amt'}"
+									>{row.type === 'income' ? '+' : '−'}{fmt(row.amount)}</span
+								>
 							</li>
 						{/each}
 					</ul>
@@ -257,9 +259,20 @@
 		color: var(--ink-muted);
 	}
 
+	/* Ledger amount columns: Nunito + tabular-nums, no monospace, no Averia
+	   (decision A). Color goes on the amount only, always with a sign. */
 	.value {
-		font-family: var(--font-numeric);
+		font-family: var(--font-text);
 		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+
+	.income-amt {
+		color: var(--income-green);
+	}
+
+	.expense-amt {
+		color: var(--expense-coral);
 	}
 
 	ul {
@@ -271,8 +284,13 @@
 	li {
 		display: flex;
 		justify-content: space-between;
-		padding: var(--spacing-sm) 0;
+		gap: var(--spacing-md);
+		padding: var(--spacing-sm) var(--spacing-md);
 		border-bottom: 1px solid var(--hairline);
+	}
+
+	li .value {
+		flex-shrink: 0;
 	}
 
 	table {
@@ -294,6 +312,11 @@
 		color: var(--ink-muted);
 		font-weight: normal;
 		font-size: 0.875rem;
+	}
+
+	/* Numeric headers sit right-aligned over their numeric columns. */
+	.num {
+		text-align: right;
 	}
 
 	/* Skeleton ghosts — static bar on --surface; shimmer is a pure-luminance
