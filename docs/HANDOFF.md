@@ -1,26 +1,30 @@
-# 2penny — Engineering Handoff (2026-07-11 12:33)
+# 2penny — Engineering Handoff (2026-07-12 09:13)
 
 ## Branch & stage
-- branch: master | roadmap stage: 5 Rediseño visual Night Ledger (EN CURSO — no plan file yet)
+- branch: master | roadmap stage: 5 Rediseño visual Night Ledger (EN CURSO — plan v3 committed, execution GATED, Task 0 NOT executed)
 
 ## Verified deployment (WEBHOOK INTEGRITY)
 - Apps Script deployment id: `AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W @12` (Telegram webhook - Anyone)
-- /exec URL unchanged since last stage: yes — `clasp deployments` run this session at Stage 4 closure shows the same 7 deployments (same ids/versions) as the Stage 3 baseline; zero clasp write commands executed this session.
+- /exec URL unchanged since last stage: yes — `clasp deployments` run this session (read-only, at session close) shows the same 7 deployments (same ids/versions) as the Stage 4 closure baseline; zero clasp write commands executed this session.
 
 ## In-flight tasks (with file paths)
-- None in-flight. Stage 4 closed (ADR-0014, commit `160cc25`, pushed to `origin/master`). Stage 5 not yet started — no plan file exists at `docs/plans/` for Stage 5.
+- Stage 5 plan v3 — `docs/plans/stage-5-night-ledger-plan.md` — committed at `4e24229`, working tree clean, Task 0 NOT executed.
+- Plan status: **conditionally ratified by chat governance. Execution is gated on TWO pending confirmations from Camilo:**
+  1. **Responsive ≤480px:** static/compact as committed in `5319fd8` (default, recommended) vs. revert `5319fd8` and implement the legacy carousel.
+  2. **Focus ring:** neutral `--ink` as committed in plan v3 (default, recommended) vs. `--savings-teal`.
+- Session commits for traceability: `ded362d` (ADR-0015), `d95e4bf` (plan v1), `6b7b9fe` (ADR-0016), `180c266` (plan v2), `5319fd8` (DESIGN.md §3 re-derivation + design-tokens SKILL.md drift fixes), `4e24229` (plan v3). NOTE: branch is ahead of `origin/master` by 7 with the handoff commit — push not yet authorized this session.
 
 ## Next planned step
-- Write/approve `docs/plans/stage-5-*.md` (Night Ledger visual redesign; frontend-only, `docs/DESIGN.md` + design-tokens skill govern; Verbatim Token Rule applies to any tokens.css change).
+- Read this handoff, run `git remote -v` (expect `pacc0/2penny`) and `git status --short` (expect clean), then **WAIT for Camilo's two answers above before touching anything.** On green light: execute Task 0 onward per plan v3 @ `4e24229`, in order, with each task's VERIFICATION block.
 
 ## Known landmines
-- clasp footgun: never let the /exec URL silently change — `clasp push` only updates @HEAD; a new `clasp deploy` mints a NEW url. Use the clasp-deploy skill.
-- **Pages production branch is `main`, but the git repo's branch is `master`.** Every `wrangler pages deploy` MUST pass `--branch=main` or it silently lands as Preview and production keeps serving the old build (bit us in Stage 4, see ADR-0014).
-- Cloudflare Pages secrets (`APPS_SCRIPT_EXEC_URL`, `API_SECRET`, Production env) only take effect on the NEXT deployment, not on save.
-- The dashboard proxy is a SvelteKit server route (`frontend/src/routes/api/dashboard/+server.js`), NOT a separate Pages Function. It maps body errors to HTTP: `"unauthorized"`→401, other non-null→500, `"upstream"` (proxy-generated: timeout/network/non-JSON)→502; 25s timeout; `Cache-Control: no-store` on every response. Contract still 1.0 (`"upstream"` is additive, DATA_CONTRACT.md §3).
-- ADR-0002 RESOLVED: wildcard Access app covers `*.2penny.pages.dev` — all preview hashes 302 to Access. Do not touch the two Access applications.
-- `frontend/src/routes/+page.js` deliberately overrides `+layout.js`'s `prerender = true` with `prerender = false` — DATA_CONTRACT.md §3 live-read rule. Do not remove.
-- `frontend/vite.config.js` (not `svelte.config.js`) holds adapter-cloudflare config and forces runes mode.
+- clasp footgun: never let the /exec URL silently change — `clasp push` only updates @HEAD; a new `clasp deploy` mints a NEW url. Zero clasp commands this stage (frontend-only).
+- **Pages production branch is `main`, git branch is `master`.** Every `wrangler pages deploy` MUST carry `--branch=main` or it silently lands as Preview (ADR-0014).
+- Legacy repo `pacc0/penny` is NEVER touched (ADR-0004); the ADR-0016 traceability note is sufficient, legacy decommissions at Stage 7.
+- design-tokens SKILL.md and DESIGN.md §3/§4 were drift-fixed this session (`5319fd8`): no monospace mandate, ADR-0015 luminance-gradient exception present in both. DESIGN.md §4 correction for typography is still plan Task 1 (not yet executed).
+- Cloudflare Pages secrets only take effect on the NEXT deployment, not on save.
+- Dashboard proxy is a SvelteKit server route (`frontend/src/routes/api/dashboard/+server.js`); on upstream errors it returns its OWN body — never forwards upstream URL/body; secret is server-side only.
+- `frontend/src/routes/+page.js` deliberately keeps `prerender = false` (DATA_CONTRACT.md §3 live-read). Plan Task 4 changes its load() to streamed promise but MUST keep the override.
 - Node pinned to 24 (dev + CI, ADR-0013).
 
 ## Evidence attached
@@ -29,16 +33,16 @@ $ git branch --show-current
 master
 
 $ git status --short --branch
-## master...origin/master   (clean, synced)
+## master...origin/master [ahead 6]   (clean; ahead 7 after handoff commit)
 
-$ git log --oneline -5
-160cc25 docs: close stage 4 — ADR-0014, roadmap status update (stage-closer)
-bf9147a docs(contract): additive "upstream" error value (Stage 4, no version bump)
-a91bef7 feat(frontend): real Apps Script fetch in dashboard proxy (Stage 4)
-e986445 docs: fix Pages Function terminology in ROADMAP.md Etapa 4 title
-f2ea871 docs(plans): stage 4 execution plan — real data via server route proxy
+$ git log --oneline -5   (pre-handoff)
+4e24229 docs(plans): stage 5 plan v3 - decision D, preload crossorigin, neutral focus ring, error-copy guard, CI/Playwright verified
+5319fd8 docs(design): ratify Stage 5 responsive re-derivation in section 3; sync design-tokens skill (decision A, ADR-0015)
+180c266 docs(plans): stage 5 plan v2 — decisions A/B/C ratified, ADR-0016 wired
+6b7b9fe docs: ADR-0016 self-hosted fonts on Pages, supersedes legacy ADR-0003 delivery (Stage 5)
+d95e4bf docs(plans): stage 5 execution plan — Night Ledger shell redesign (DRAFT)
 
-$ clasp deployments   (run from backend/, at Stage 4 closure this session)
+$ clasp deployments   (run from backend/, read-only, session close)
 Found 7 deployments.
 - AKfycbw0c5iuRK2kDx8zDqAwj4ZAOI0fcqWRYISHcU_DMgo @HEAD
 - AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W @12 - Telegram webhook - Anyone
@@ -47,11 +51,4 @@ Found 7 deployments.
 - AKfycby1gkwO5fSnRFMAfZ15Or7Mi_dh9ITYl2zuuspzi21Kr-VWqEGzhlyurJnisnwjsVGk @1 - Phase 2 initial deployment
 - AKfycbz23K-9eRvUrtQidkEWb2dH95yRvZ9haLFP4luLXAfu4OcFdyKTg-z7-KOAabz9kGEU @6 - Phase 3 - HtmlService webhook response fix
 - AKfycbzVpXDarjXx2laafzUiuOFwDSlgPd_gnlQVGsaJ26vdthxMOWYdoN6V-HtY1ivOy_Sq @20 - UI-3 Night Ledger restyle
-
-Stage 4 battery (this session, production 2penny.pages.dev behind Access):
-- Happy path: HTTP 200, real data (deployment f56010a9) — human-observed
-- 401 "unauthorized" forced via corrupted API_SECRET (deployment f9e9dc3c)
-- 502 "upstream" forced via dead exec URL (deployment 1e07b2d2)
-- Preview URLs b06ac578 / 05a342b7 / f56010a9: all 302 -> cloudflareaccess
-- /api/dashboard unauthenticated: 302 (not publicly reachable)
 ```
