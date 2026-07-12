@@ -18,7 +18,8 @@
 			{#each Array(4) as _, i (i)}
 				<div class="kpi">
 					<span class="label"><span class="ghost ghost-label">&nbsp;</span></span>
-					<span class="value"><span class="ghost ghost-value">&nbsp;</span></span>
+					<span class="hero"><span class="ghost ghost-value">&nbsp;</span></span>
+					<span class="delta"><span class="ghost ghost-delta">&nbsp;</span></span>
 				</div>
 			{/each}
 		</section>
@@ -78,23 +79,35 @@
 				<p class="period">{payload.period.month} · generado {payload.generated_at}</p>
 			</header>
 
+			<!-- KPI deltas: last vs. previous net_flow_series row. Verified in
+			     backend Api.js: series[11].month === period.month by
+			     construction (same todayIso builds both). Savings: month vs
+			     monthly_goal. -->
+			{@const curr = payload.net_flow_series[payload.net_flow_series.length - 1]}
+			{@const prev = payload.net_flow_series[payload.net_flow_series.length - 2]}
+			{@const deltas = [
+				{ label: 'Ingresos', value: payload.kpis.income, d: curr.income - prev.income, favorableUp: true, note: 'vs mes anterior' },
+				{ label: 'Gastos', value: payload.kpis.expenses, d: curr.expenses - prev.expenses, favorableUp: false, note: 'vs mes anterior' },
+				{ label: 'Flujo neto', value: payload.kpis.net_flow, d: curr.net_flow - prev.net_flow, favorableUp: true, note: 'vs mes anterior' },
+				{ label: 'Ahorro', value: payload.kpis.savings.month, d: payload.kpis.savings.month - payload.kpis.savings.monthly_goal, favorableUp: true, note: 'vs meta' }
+			]}
 			<section class="kpis">
-				<div class="kpi">
-					<span class="label">Ingresos</span>
-					<span class="value income">{fmt(payload.kpis.income)}</span>
-				</div>
-				<div class="kpi">
-					<span class="label">Gastos</span>
-					<span class="value expense">{fmt(payload.kpis.expenses)}</span>
-				</div>
-				<div class="kpi">
-					<span class="label">Flujo neto</span>
-					<span class="value">{fmt(payload.kpis.net_flow)}</span>
-				</div>
-				<div class="kpi">
-					<span class="label">Ahorro (mes / meta)</span>
-					<span class="value">{fmt(payload.kpis.savings.month)} / {fmt(payload.kpis.savings.monthly_goal)}</span>
-				</div>
+				{#each deltas as card (card.label)}
+					{@const favorable = card.favorableUp ? card.d >= 0 : card.d <= 0}
+					<div class="kpi">
+						<span class="label">{card.label}</span>
+						<span class="hero">{fmt(card.value)}</span>
+						<span class="delta" class:favorable class:unfavorable={!favorable}>
+							{#if card.d >= 0}
+								<svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true"><path d="M4 1l3.5 6h-7z" fill="currentColor" /></svg>
+							{:else}
+								<svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true"><path d="M4 7L0.5 1h7z" fill="currentColor" /></svg>
+							{/if}
+							{card.d >= 0 ? '+' : '−'}{fmt(Math.abs(card.d))}
+							<span class="delta-note">{card.note}</span>
+						</span>
+					</div>
+				{/each}
 			</section>
 
 			<section>
@@ -202,26 +215,51 @@
 		flex-direction: column;
 		gap: var(--spacing-xs);
 		padding: var(--spacing-md);
-		background: var(--surface);
-		border-radius: var(--rounded-md);
+		/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
+		background: linear-gradient(var(--surface-raised), var(--surface));
+		border: 1px solid var(--hairline);
+		border-radius: var(--rounded-lg);
 	}
 
 	.label {
 		color: var(--ink-muted);
-		font-size: 0.875rem;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	/* Hero figure: single value per card — Averia 700 (decision A). */
+	.hero {
+		font-family: var(--font-numeric);
+		font-weight: 700;
+		font-size: 1.5rem;
+		font-variant-numeric: tabular-nums;
+		color: var(--ink);
+	}
+
+	.delta {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-xs);
+		font-size: 0.8125rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.delta.favorable {
+		color: var(--income-green);
+	}
+
+	.delta.unfavorable {
+		color: var(--expense-coral);
+	}
+
+	.delta-note {
+		color: var(--ink-muted);
 	}
 
 	.value {
 		font-family: var(--font-numeric);
 		font-variant-numeric: tabular-nums;
-	}
-
-	.income {
-		color: var(--income-green);
-	}
-
-	.expense {
-		color: var(--expense-coral);
 	}
 
 	ul {
@@ -311,6 +349,10 @@
 
 	.ghost-value {
 		width: 75%;
+	}
+
+	.ghost-delta {
+		width: 60%;
 	}
 
 	.ghost-row {
