@@ -98,6 +98,13 @@ la doctrina de breakpoints, no la implementación de layout legacy.
   funcionales); look default shadcn/Tailwind o drop-shadow uniforme en
   todas las cards; Inter/Roboto/Arial/system-font como tipografía display;
   iconos decorativos sin función.
+- **Excepción única de gradiente — luminancia (ADR-0015):** se permiten
+  linear gradients cuyos DOS extremos son tokens de superficie existentes
+  (`--surface` → `--surface-raised`, o cualquiera de los dos → `--bg`),
+  solo para sugerir caída de luz en cards/superficies. Los gradientes de
+  matiz (hue) siguen siendo FAIL duro; los decorativos de cualquier color
+  saturado, también. Glassmorphism / `backdrop-filter`: FAIL duro SIN
+  excepciones, incluidos sticky headers (ADR-0015).
 - **Mandatos:** cifras con `tabular-nums`; monospace en columnas
   numéricas/ledger; alto contraste, densidad profesional estética
   terminal/ledger; jerarquía por tamaño/peso/espacio, no por ruido de

@@ -269,3 +269,24 @@ adicional: cambios de secretos en Pages solo aplican en el SIGUIENTE
 deployment (no al guardar), por eso cada toggle de la batería requirió
 re-deploy.
 **Fecha:** 2026-07-11.
+
+## ADR-0015 — Excepción de gradiente de luminancia; glassmorphism rechazado sin excepciones
+
+**Contexto:** arranque de Etapa 5 (rediseño visual Night Ledger). Se evaluó
+el repo externo `nextlevelbuilder/ui-ux-pro-max-skill` como fuente de
+patrones y la pregunta de si DESIGN.md §4 admite algún gradiente.
+**Decisión (tres partes, ratificadas por Camilo 2026-07-12):**
+1. **Gradientes de luminancia permitidos (enmienda aditiva a DESIGN.md §4):**
+   linear gradients cuyos DOS extremos son tokens de superficie existentes
+   (`--surface` → `--surface-raised`, o cualquiera de los dos → `--bg`),
+   usados únicamente para sugerir caída de luz en cards/superficies. Los
+   gradientes de matiz (hue) siguen siendo FAIL duro. Los gradientes
+   decorativos de cualquier color saturado siguen siendo FAIL duro.
+2. **Glassmorphism / `backdrop-filter`: evaluado y RECHAZADO explícitamente
+   por Camilo.** Sigue siendo FAIL duro SIN excepciones — incluidos sticky
+   headers. No se re-litiga casualmente; revocar exige ADR nuevo.
+3. **`nextlevelbuilder/ui-ux-pro-max-skill` RECHAZADO como fuente de
+   patrones:** no se instala, no se importa, no se emulan sus defaults
+   (asume Tailwind/shadcn y recomienda glassmorphism/gradientes/paletas
+   SaaS claras — todos FAIL duro bajo §4).
+**Fecha:** 2026-07-12.
