@@ -1,8 +1,8 @@
 # Stage 5 Plan — Night Ledger visual redesign (shell only)
 
-Status: DRAFT v2 — decisions A/B/C ratified in-session (2026-07-12,
-ADR-0016 for B). Awaiting Camilo ratification of the plan itself. No task
-executes before ratification.
+Status: DRAFT v3 — decisions A/B/C/D ratified in-session (2026-07-12,
+ADR-0016 for B; DESIGN.md §3 amendment for D). Awaiting Camilo ratification
+of the plan itself. No task executes before ratification.
 
 ## Scope
 
@@ -40,6 +40,15 @@ task. Every `wrangler pages deploy` carries `--branch=main`.
   "at most 1 CTA; resolved/caught-up states carry zero" — this is the
   correct application of the pattern, NOT a deviation. Copy: positive,
   present-tense, no nudge to spend (final wording is Camilo's).
+- **D — Responsive re-derivation ratified (DESIGN.md §3 amendment,
+  2026-07-12).** Static/compact grids at all breakpoints. The legacy
+  ≤480px scroll-snap carousels and the pending-hero → badge fold are NOT
+  inherited (no pending-hero exists in the new shell). Task 8 implements
+  §3 as amended — it does not silently supersede doctrine. Note: this
+  repo's DESIGN.md §1 never contained the carousel paragraph (grep
+  verified); the mandate lived in the legacy doc, and §3 already delegated
+  layout re-derivation to Stage 5 — the amendment makes the resolution
+  explicit.
 
 ## Assumption to verify in-task
 
@@ -73,11 +82,16 @@ cd frontend && npm run dev → serves; browser shows current Stage 4 shell
 - Commit: `docs(design): §4 ledger typography correction — tabular Nunito,
   no monospace (Stage 5, decision A)`.
 
+Note: the second monospace location (`.claude/skills/design-tokens/
+SKILL.md:24`) was already corrected pre-plan (2026-07-12 review round),
+including the ADR-0015 luminance-gradient exception the skill also lacked.
+
 **VERIFICATION**
 ```
 git show --stat HEAD → only docs/DESIGN.md
 git diff HEAD~1 -- frontend/src/lib/styles/tokens.css → empty (untouched)
-grep -n "monospace" docs/DESIGN.md → 0 mandate hits remaining
+grep -rn "monospace" docs/DESIGN.md .claude/skills/ → 0 mandate hits
+  remaining (only the "no monospace" correction lines themselves)
 ```
 
 ## Task 2 — Self-host doctrine fonts (decision B, ADR-0016)
@@ -91,8 +105,9 @@ grep -n "monospace" docs/DESIGN.md → 0 mandate hits remaining
   `'Averia Sans Libre'` (must match the existing token stacks verbatim —
   `@font-face` wires files to EXISTING tokens, touches no token values).
 - `frontend/src/routes/+layout.svelte`: `import '$lib/styles/fonts.css';`
-  + optional `<link rel="preload">` for `nunito-variable.woff2`
-  (above-the-fold face).
+  + optional preload of `nunito-variable.woff2` (above-the-fold face) —
+  MUST be `<link rel="preload" as="font" type="font/woff2" crossorigin>`
+  (without `crossorigin` a font preload is ignored/double-fetched).
 
 **VERIFICATION**
 ```
@@ -107,8 +122,10 @@ Screenshot: docs/evidence/stage-5/task2-fonts.png
 - New `frontend/src/lib/styles/base.css`: body `margin:0`,
   `background: var(--bg)`, `color: var(--ink)`,
   `font-family: var(--font-text)`; global
-  `:focus-visible { outline: 2px solid var(--savings-teal); outline-offset: 2px; }`
-  (single focus color, ring not color-shift).
+  `:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }`
+  (ring not color-shift; neutral `--ink` keeps every hue financially
+  semantic per §1 — flagged default, Camilo may switch to
+  `--savings-teal` at ratification).
 - `frontend/src/routes/+layout.svelte`: import base.css.
 - `frontend/src/routes/+page.svelte`: header block restyled — `h1` +
   period line (`--ink-muted`), container `max-width` kept, page gutters via
@@ -199,7 +216,12 @@ Visual: no full-row coloring anywhere; sign present on every colored amount
     final wording is Camilo's) + functional SVG. No CTA, no illustration,
     no emoji. Never "No data", never a nudge to spend/log.
   - Error branch (401/500/502 payloads): same restraint — title, one line
-    naming the error value verbatim, `--alert-red` on the status word only.
+    naming the contract error value verbatim (`unauthorized` / `internal` /
+    `upstream`), `--alert-red` on the status word only. NEVER the upstream
+    Apps Script URL or any secret. Proxy already guarantees this (verified
+    2026-07-12, `+server.js`): on timeout/network/non-JSON it returns its
+    OWN body `{contract_version, error:"upstream"}` — the upstream
+    body/URL is never forwarded; the secret exists only server-side.
 
 **VERIFICATION**
 ```
@@ -207,9 +229,13 @@ Force empty pending (mock payload in dev) → screenshot
 docs/evidence/stage-5/task7-empty.png
 Force error (dev fetch to dead route) → error state renders, no raw JSON
 grep diff for '<a |<button' inside the empty-state block → 0 matches
+grep rendered error markup for 'script.google|APPS_SCRIPT|key=' → 0 matches
 ```
 
 ## Task 8 — Responsive (768 / 480, A56 reference)
+
+Implements DESIGN.md §3 as amended 2026-07-12 (decision D — static/compact,
+no carousels, no pending-hero fold).
 
 - `frontend/src/routes/+page.svelte` media queries:
   - ≥769px: KPI grid 4-up (or 2×2 — pick by density at build time).
@@ -219,8 +245,10 @@ grep diff for '<a |<button' inside the empty-state block → 0 matches
 
 **VERIFICATION**
 ```
-Playwright viewport 395×893 (Galaxy A56): full-page screenshot, no
-horizontal body scroll — docs/evidence/stage-5/task8-a56.png
+Playwright MCP browser tooling (dev-environment plugin, verified NOT an
+npm dependency — frontend/package.json untouched, "no new deps" intact):
+viewport 395×893 (Galaxy A56): full-page screenshot, no horizontal body
+scroll — docs/evidence/stage-5/task8-a56.png
 Also 768×1024 and 1280×800 screenshots.
 ```
 
@@ -252,6 +280,7 @@ wrangler pages deployment list → new deployment marked Production
 curl -sI https://2penny.pages.dev → 302 cloudflareaccess (Access intact)
 curl -sI https://<new-hash>.2penny.pages.dev → 302 (wildcard intact)
 Camilo, authenticated browser: real data renders in new shell (200)
-CI frontend-ci → green run id logged
+CI frontend-ci → green run id logged (workflow exists:
+.github/workflows/frontend-ci.yml, first green run 29068207599, Stage 3)
 git log --oneline (stage commits) + push to origin/master
 ```
