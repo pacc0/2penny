@@ -1,6 +1,8 @@
 # Stage 5 Plan — Night Ledger visual redesign (shell only)
 
-Status: DRAFT — awaiting Camilo approval. No task executes before ratification.
+Status: DRAFT v2 — decisions A/B/C ratified in-session (2026-07-12,
+ADR-0016 for B). Awaiting Camilo ratification of the plan itself. No task
+executes before ratification.
 
 ## Scope
 
@@ -18,27 +20,26 @@ Glassmorphism / `backdrop-filter` / blur / glow / drop-shadow: FAIL, no
 exceptions. The `design-tokens` skill is invoked before every CSS-writing
 task. Every `wrangler pages deploy` carries `--branch=main`.
 
-## Open decisions (ratify with this plan)
+## Ratified decisions (Camilo, 2026-07-12)
 
-- **A — Monospace ledger column has no token.** DESIGN.md §4 mandates
-  monospace in ledger/amount columns, but §2 defines no `--font-mono` and
-  its typography note says numeric columns use Nunito + `tabular-nums`.
-  Inventing a stack violates the Verbatim Token Rule.
-  **Proposal:** additive §2 amendment adding
-  `--font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;`
-  (system stacks only — no font download, no dependency) + verbatim sync to
-  tokens.css. **Reject ⇒** Task 1 is dropped and ledger columns use Nunito +
-  `tabular-nums` per §2; §4 stays as aspiration until a token exists.
-- **B — Doctrine fonts are referenced but never loaded.** `--font-text` /
-  `--font-numeric` name Nunito Variable and Averia Sans Libre; nothing
-  loads them, so production renders Trebuchet/Segoe fallbacks today.
-  **Proposal:** self-host woff2 files (OFL license, zero cost) in
-  `frontend/static/fonts/` + `@font-face` in a new `fonts.css`. Static
-  assets, not npm dependencies. No CDN (external runtime request rejected).
-- **C — Empty-state CTA target.** Pending-empty state needs exactly one
-  CTA; the only real action is registering a movement via the Telegram bot.
-  Camilo supplies the `t.me/...` deep link at Task 7 (or rejects the CTA —
-  then title + line only, deviation from pattern noted).
+- **A — No `--font-mono` token.** Ledger/column numerals use
+  `var(--font-text)` (Nunito) + `font-variant-numeric: tabular-nums`.
+  `--font-numeric` (Averia, proportional per the legacy ADR-0003 spike) is
+  reserved for single-value hero figures. Task 1 is a corrective DESIGN.md
+  §4 edit to remove the monospace mandate. Zero new tokens.
+- **B — Self-host doctrine fonts (ADR-0016,** supersedes-in-part legacy
+  `pacc0/penny` ADR-0003 delivery mechanism**).** Exactly 3 woff2 files:
+  Nunito Variable (one variable file covers 500/700), Averia 400, Averia
+  700. Averia 300 exists but is unused — not shipped. Latin subset only
+  (covers Spanish; NO latin-ext). `font-display: swap`; optional preload of
+  the above-the-fold face. No CDN, no npm dependency, zero cost.
+- **C — Pending empty state carries ZERO CTA.** Per DATA_MODEL.md
+  Status/Source Rules, Pending only comes from Gmail import awaiting
+  review; Telegram entries are born Confirmed and never enter this queue —
+  a Telegram CTA would be a false affordance. The empty-state pattern reads
+  "at most 1 CTA; resolved/caught-up states carry zero" — this is the
+  correct application of the pattern, NOT a deviation. Copy: positive,
+  present-tense, no nudge to spend (final wording is Camilo's).
 
 ## Assumption to verify in-task
 
@@ -61,33 +62,41 @@ node --version           → v24.x (ADR-0013)
 cd frontend && npm run dev → serves; browser shows current Stage 4 shell
 ```
 
-## Task 1 — `--font-mono` token amendment (BLOCKED on decision A)
+## Task 1 — Corrective DESIGN.md §4 typography edit (decision A)
 
-- `docs/DESIGN.md` §2: add `--font-mono` line to the verbatim `:root`
-  block (additive) + one typography sentence: ledger/amount columns use
-  `--font-mono` with `tabular-nums`; §2's Nunito note now covers non-ledger
-  numeric text only.
-- `frontend/src/lib/styles/tokens.css`: verbatim re-sync of the block.
-- Commit: `docs(design): additive --font-mono token (Stage 5, decision A)`.
+- `docs/DESIGN.md` §4 Mandatos: replace "monospace en columnas
+  numéricas/ledger" with: ledger/column numerals use `var(--font-text)`
+  (Nunito) + `font-variant-numeric: tabular-nums`; `--font-numeric`
+  (Averia, proportional — legacy ADR-0003 spike) reserved for single-value
+  hero figures. This aligns §4 with §2's existing typography note. No token
+  changes; tokens.css untouched.
+- Commit: `docs(design): §4 ledger typography correction — tabular Nunito,
+  no monospace (Stage 5, decision A)`.
 
 **VERIFICATION**
 ```
-diff of DESIGN.md §2 block vs tokens.css :root → byte-identical
-git show --stat HEAD → only the 2 files above
+git show --stat HEAD → only docs/DESIGN.md
+git diff HEAD~1 -- frontend/src/lib/styles/tokens.css → empty (untouched)
+grep -n "monospace" docs/DESIGN.md → 0 mandate hits remaining
 ```
 
-## Task 2 — Self-host doctrine fonts (decision B)
+## Task 2 — Self-host doctrine fonts (decision B, ADR-0016)
 
-- `frontend/static/fonts/nunito-variable.woff2` (latin, wght axis),
-  `averia-sans-libre-{300,400,700}.woff2` (latin).
-- New `frontend/src/lib/styles/fonts.css`: four `@font-face` rules,
+- `frontend/static/fonts/`: exactly 3 files — `nunito-variable.woff2`
+  (latin, wght axis), `averia-sans-libre-400.woff2`,
+  `averia-sans-libre-700.woff2`. Latin subset only. No Averia 300, no
+  italics — zero dead weights.
+- New `frontend/src/lib/styles/fonts.css`: three `@font-face` rules,
   `font-display: swap`, family names exactly `'Nunito Variable'` /
-  `'Averia Sans Libre'` (must match tokens verbatim).
-- `frontend/src/routes/+layout.svelte`: `import '$lib/styles/fonts.css';`.
+  `'Averia Sans Libre'` (must match the existing token stacks verbatim —
+  `@font-face` wires files to EXISTING tokens, touches no token values).
+- `frontend/src/routes/+layout.svelte`: `import '$lib/styles/fonts.css';`
+  + optional `<link rel="preload">` for `nunito-variable.woff2`
+  (above-the-fold face).
 
 **VERIFICATION**
 ```
-ls frontend/static/fonts → 4 .woff2 files, sizes logged
+ls frontend/static/fonts → exactly 3 .woff2 files, sizes logged
 dev server: GET /fonts/nunito-variable.woff2 → 200
 DevTools computed font-family on body → "Nunito Variable" (not Trebuchet)
 Screenshot: docs/evidence/stage-5/task2-fonts.png
@@ -165,9 +174,10 @@ grep the diff for 'box-shadow|backdrop-filter|blur' → 0 matches
   - Categories / accounts / pending → ledger rows: text left, amount right,
     single-direction horizontal `--hairline` separators, NO zebra, NO card
     borders, row padding `--spacing-sm`/`--spacing-md`.
-  - Amount column: `--font-mono` (or Nunito per decision A fallback) +
-    `tabular-nums`, right-aligned; income/expense color on the AMOUNT only
-    with explicit +/− sign; row text stays `--ink`.
+  - Amount column: `var(--font-text)` + `font-variant-numeric:
+    tabular-nums` (decision A — no monospace, no Averia in columns),
+    right-aligned; income/expense color on the AMOUNT only with explicit
+    +/− sign; row text stays `--ink`.
   - Net-flow table: numeric headers right-aligned over their columns,
     header row `--ink-muted`, all numeric cells `tabular-nums`, hairline
     rows only.
@@ -183,10 +193,11 @@ Visual: no full-row coloring anywhere; sign present on every colored amount
 ## Task 7 — Empty + error states
 
 - `frontend/src/routes/+page.svelte`:
-  - Pending empty: positive title ("Todo al día"), one line ("Los
-    movimientos pendientes aparecerán aquí."), ONE CTA → Telegram deep
-    link from decision C. No illustration, no emoji, functional SVG only.
-    Never "No data".
+  - Pending empty (decision C — ZERO CTA, correct pattern application for
+    a caught-up state): positive present-tense title + one supporting line
+    (e.g. "Todo al día — no hay transacciones pendientes de confirmar.";
+    final wording is Camilo's) + functional SVG. No CTA, no illustration,
+    no emoji. Never "No data", never a nudge to spend/log.
   - Error branch (401/500/502 payloads): same restraint — title, one line
     naming the error value verbatim, `--alert-red` on the status word only.
 
@@ -195,6 +206,7 @@ Visual: no full-row coloring anywhere; sign present on every colored amount
 Force empty pending (mock payload in dev) → screenshot
 docs/evidence/stage-5/task7-empty.png
 Force error (dev fetch to dead route) → error state renders, no raw JSON
+grep diff for '<a |<button' inside the empty-state block → 0 matches
 ```
 
 ## Task 8 — Responsive (768 / 480, A56 reference)
