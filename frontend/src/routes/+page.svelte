@@ -1,6 +1,7 @@
 <script>
 	import { formatCurrency } from '$lib/format.js';
 	import NetFlowChart from '$lib/components/NetFlowChart.svelte';
+	import PaymentMethodChart from '$lib/components/PaymentMethodChart.svelte';
 
 	/** @type {{ data: { payload: Promise<import('$lib/contract.js').DashboardContract> } }} */
 	let { data } = $props();
@@ -12,6 +13,14 @@
 	function syncDots(e) {
 		const t = /** @type {HTMLElement} */ (e.currentTarget);
 		activeSlide = Math.round(t.scrollLeft / t.clientWidth);
+	}
+
+	// Chart carousel (Stage 6): own scroll state, same dot pattern.
+	let activeChartSlide = $state(0);
+	/** @param {Event} e */
+	function syncChartDots(e) {
+		const t = /** @type {HTMLElement} */ (e.currentTarget);
+		activeChartSlide = Math.round(t.scrollLeft / t.clientWidth);
 	}
 </script>
 
@@ -79,8 +88,8 @@
 			</ul>
 		</section>
 
-		<!-- Chart carousel skeleton mirrors the real chart card (zero CLS):
-		     same card, ghost at the chart wrap's 240px height. -->
+		<!-- Chart carousel skeleton mirrors the real chart cards (zero CLS):
+		     same cards, ghosts at each chart wrap's fixed height. -->
 		<section>
 			<div class="carousel-wrap">
 				<div class="carousel-track">
@@ -88,6 +97,15 @@
 						<h2>Evolución del flujo neto</h2>
 						<span class="ghost ghost-chart">&nbsp;</span>
 					</div>
+					<div class="chart-card">
+						<h2>Gastos por método de pago</h2>
+						<span class="ghost ghost-chart-bar">&nbsp;</span>
+					</div>
+				</div>
+				<div class="carousel-dots" aria-hidden="true">
+					{#each Array(2) as _, i (i)}
+						<span class="dot" class:active={i === 0}></span>
+					{/each}
 				</div>
 			</div>
 		</section>
@@ -191,15 +209,23 @@
 
 			<!-- Charts (Stage 6): carousel structure per D5 — desktop unwraps via
 			     display:contents (no carousel there); ≤480px the track scrolls
-			     with fixed-height slides. Dots land with the second slide
-			     (Task 2) — a single slide cannot scroll. -->
+			     with fixed-height slides (R2) and dots. -->
 			<section>
 				<div class="carousel-wrap">
-					<div class="carousel-track">
+					<div class="carousel-track" onscroll={syncChartDots}>
 						<div class="chart-card">
 							<h2>Evolución del flujo neto</h2>
 							<NetFlowChart series={payload.net_flow_series} />
 						</div>
+						<div class="chart-card">
+							<h2>Gastos por método de pago</h2>
+							<PaymentMethodChart rows={payload.expenses_by_account} />
+						</div>
+					</div>
+					<div class="carousel-dots" aria-hidden="true">
+						{#each Array(2) as _, i (i)}
+							<span class="dot" class:active={i === activeChartSlide}></span>
+						{/each}
 					</div>
 				</div>
 			</section>
@@ -594,9 +620,13 @@
 		background: var(--surface-raised);
 	}
 
-	/* Chart ghost matches the chart wrap's 240px (zero CLS at swap). */
+	/* Chart ghosts match each chart wrap's fixed height (zero CLS at swap). */
 	.ghost-chart {
 		height: 240px;
+	}
+
+	.ghost-chart-bar {
+		height: 320px;
 	}
 
 	.ghost-period {
