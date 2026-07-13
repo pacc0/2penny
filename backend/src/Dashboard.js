@@ -1,7 +1,7 @@
-// Phase 5: single Web App page (doGet) that reads the sheets and returns a
-// fully server-aggregated dashboard. See docs/DASHBOARD.md v2.0 for the
-// complete build spec and docs/DATA_MODEL.md for Reporting Rules — every
-// aggregation here traces back to one of those.
+// Shared sheet loaders and aggregators consumed by Api.js (json-api @21) and
+// MonthlySummary.js (Telegram). See docs/DATA_MODEL.md for Reporting Rules —
+// every aggregation here traces back to it. The v1.0 doGet dashboard that
+// originally owned this file was retired in Stage 7 (see stage-7-cutover plan).
 //
 // getSpreadsheetId_() (GmailIngestion.gs) and the sheet-name constants /
 // todayIsoDate_() (TransactionsRepository.gs) are reused as-is.
@@ -21,67 +21,6 @@ var COL_MERCHANT_RAW = 10;
 var COL_SOURCE = 11;
 var COL_STATUS = 12;
 var COL_CREATED_AT = 13;
-
-// RENAMED in Stage 2: the v1.0 dashboard deployment is PINNED to the pre-Stage-2
-// version and still serves this function there. Never bump that deployment.
-// Retirement: Stage 7. See docs/DECISIONS.md ADR-0011.
-/**
- * Web App entry point (this project's only doGet — doPost is owned by the
- * Telegram webhook). No caching, no partial render: any read failure serves
- * a single Spanish error message.
- */
-function doGet_legacy_v1() {
-  try {
-    var template = HtmlService.createTemplateFromFile('DashboardPage');
-    template.data = buildDashboardData_(getSpreadsheetId_());
-    return template.evaluate().setTitle('Penny — Tablero');
-  } catch (err) {
-    Logger.log('doGet failed: ' + err);
-    return HtmlService.createHtmlOutput(
-      '<p style="font-family:sans-serif;padding:2rem;">No fue posible cargar el tablero. Intenta de nuevo.</p>'
-    );
-  }
-}
-
-/**
- * Orchestrator: one read of each sheet, date boundaries computed once via
- * ISO-string math (transaction_date is stored as YYYY-MM-DD, so string
- * comparison works — no Date parsing needed), then every aggregator per
- * docs/DASHBOARD.md §2.4.
- */
-function buildDashboardData_(spreadsheetId) {
-  var todayIso = todayIsoDate_();
-  var monthStart = todayIso.substring(0, 7) + '-01';
-  var monthEnd = todayIso;
-  var yearStart = todayIso.substring(0, 4) + '-01-01';
-
-  var transactions = loadAllTransactions_(spreadsheetId);
-  var purposeMap = loadTransferPurposeSavingsMap_(spreadsheetId);
-  var settingsMap = loadSettingsMap_(spreadsheetId);
-
-  var goalMonthly = Number(settingsMap['Monthly Savings Goal']);
-  var percentagePrecision = Number(settingsMap['Percentage Precision']);
-  var showPending = settingsMap['Show Pending Transactions'] === 'Yes';
-
-  var data = {
-    month: aggregateMonth_(transactions, monthStart, monthEnd),
-    pendingCount: countPending_(transactions),
-    savings: aggregateSavings_(transactions, purposeMap, monthStart, monthEnd, yearStart, goalMonthly),
-    expensesByCategory: aggregateExpensesByCategory_(transactions, monthStart, monthEnd),
-    expensesByAccount: aggregateExpensesByAccount_(transactions, monthStart, monthEnd),
-    cumulativeNetFlow: aggregateCumulativeNetFlow_(transactions, monthStart, monthEnd),
-    settings: {
-      percentagePrecision: percentagePrecision,
-      showPending: showPending
-    }
-  };
-
-  if (showPending) {
-    data.pendingRows = buildPendingRows_(transactions);
-  }
-
-  return data;
-}
 
 // Sheets can auto-detect a date-shaped string and store the cell as a Date
 // serial instead of text, which getValues() then returns as a JS Date. Every
@@ -197,59 +136,3 @@ function aggregateExpensesByAccount_(transactions, monthStart, monthEnd) {
     .sort(function (a, b) { return b.total - a.total; });
 }
 
-// Calendar-day spacing per docs/DASHBOARD.md §2.4: one entry for every day
-// from monthStart through monthEnd inclusive, zero-activity days carried
-// forward flat. Builds a per-date net sum first, then walks the calendar
-// range applying a running total — simpler to read than incrementing ISO
-// date strings by hand, and this range is only ever a single calendar month.
-function aggregateCumulativeNetFlow_(transactions, monthStart, monthEnd) {
-  var netByDate = {};
-  for (var i = 1; i < transactions.length; i++) {
-    var row = transactions[i];
-    if (row[COL_STATUS] !== 'Confirmed') continue;
-    var date = row[COL_TRANSACTION_DATE];
-    if (date < monthStart || date > monthEnd) continue;
-    if (row[COL_TRANSACTION_TYPE] === 'Income') {
-      netByDate[date] = (netByDate[date] || 0) + row[COL_AMOUNT];
-    } else if (row[COL_TRANSACTION_TYPE] === 'Expense') {
-      netByDate[date] = (netByDate[date] || 0) - row[COL_AMOUNT];
-    }
-  }
-
-  var year = Number(monthStart.substring(0, 4));
-  var month = Number(monthStart.substring(5, 7));
-  var lastDay = Number(monthEnd.substring(8, 10));
-  var series = [];
-  var running = 0;
-  for (var day = 1; day <= lastDay; day++) {
-    var isoDay = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-    running += netByDate[isoDay] || 0;
-    series.push({ date: isoDay, value: running });
-  }
-  return series;
-}
-
-function buildPendingRows_(transactions) {
-  var rows = [];
-  for (var i = 1; i < transactions.length; i++) {
-    var row = transactions[i];
-    if (row[COL_STATUS] !== 'Pending') continue;
-    var type = row[COL_TRANSACTION_TYPE];
-    rows.push({
-      transaction_date: row[COL_TRANSACTION_DATE],
-      merchant: row[COL_MERCHANT],
-      categoryOrPurpose: (type === 'Expense' || type === 'Income') ? row[COL_CATEGORY] : row[COL_TRANSFER_PURPOSE],
-      amount: row[COL_AMOUNT],
-      account_from: row[COL_ACCOUNT_FROM]
-    });
-  }
-  return rows;
-}
-
-function countPending_(transactions) {
-  var count = 0;
-  for (var i = 1; i < transactions.length; i++) {
-    if (transactions[i][COL_STATUS] === 'Pending') count++;
-  }
-  return count;
-}
