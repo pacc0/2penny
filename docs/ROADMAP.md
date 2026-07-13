@@ -175,6 +175,17 @@ candidato de backlog).
 - **Re-evaluar:** ADR-0003 (cuenta clasp dedicada, cuando `CLASPRC_JSON`
   entra a GitHub Secrets).
 
+## Backlog técnico
+
+- **Post-Stage 6 debt (R3):** amend the backend JSON contract to carry a
+  daily cumulative net-flow series and restore the line chart's daily
+  granularity. Requires its own stage/plan: touches the Apps Script JSON
+  endpoint (deployment @21 only — webhook @12 untouchable), the contract
+  doc, and the chart's axis formatting (`formatDayMonth` returns). Monthly
+  semantics is an accepted interim, not the spec.
+- **`npm run check` sin gate en CI:** candidato registrado al cierre de
+  Etapa 5 (ADR-0017, nota operativa 2).
+
 ## Nota de proceso
 
 Las skills `checkpoint-chat`, `checkpoint-code` y `stage-closer` son

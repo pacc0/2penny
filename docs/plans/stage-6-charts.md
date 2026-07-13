@@ -61,6 +61,7 @@
 - Wire into the page layout / carousel slide with the v2 fixed heights.
 
 **Evidence:** screenshot desktop + A56 (real device or exact 395×893 emulation); tap shows tooltip, tap-outside dismisses, desktop hover intact; console clean; commit hash.
+**R3 note (ratified 2026-07-12, temporary concession):** data source is `net_flow_series` (monthly, contract v1.0 as-is) with `formatMonthAbbr` labels — see DESIGN.md §5 R3 note and the ROADMAP "Backlog técnico" daily-feed debt entry; target state is daily cumulative granularity via a future contract amendment.
 **Rollback:** revert this commit; dashboard renders without the line chart.
 
 ## Task 2 — Gastos por Método de Pago (horizontal bar)
@@ -87,7 +88,7 @@
 - CI green; deploy `--branch=main`; both URLs 302 to cloudflareaccess.
 - `package.json`/`package-lock.json` diff: exactly `chart.js@4.5.1`.
 - Read-only webhook integrity check: @12 and @21 identical to baseline.
-- Closure ADR (next number at closure) with per-task evidence, per Stage 5 precedent.
+- Closure ADR (next number at closure) with per-task evidence, per Stage 5 precedent. The closure ADR MUST record R3 with its exact framing: monthly net-flow semantics is a temporary scope-protecting concession, not a final design decision; target state = restoring the daily cumulative feed (ROADMAP "Backlog técnico" entry).
 - ROADMAP.md status update.
 
 ## Explicitly out of scope
