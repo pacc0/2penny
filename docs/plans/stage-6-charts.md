@@ -20,7 +20,7 @@
 - **D3:** `CATEGORY_COLOR` / `CATEGORY_EMOJI` as strictly-typed TS constants in `lib/` (data dictionaries, not tokens).
 - **D4:** Single plan, incremental execution, one commit per task for isolated rollback.
 - **D5:** Mobile ≤480px: `maintainAspectRatio: false` + fixed-height slide container; canvas fills 100% of the bounding box.
-- **D6 (P1, ratified 2026-07-12):** Semantic-hue bridge — `token(name)` helper (single `getComputedStyle` read per token at chart init, legacy pattern) used **only** for the four surface tokens feeding chart configs: `--income-green`, `--expense-coral`, `--hairline`, `--ink-muted`. Preserves the Verbatim Token Rule single source of truth. Category palette stays pure TS per D3.
+- **D6 (P1, ratified 2026-07-12; amended R1 2026-07-12):** Semantic-hue bridge — `token(name)` helper (single `getComputedStyle` read per token at chart init, legacy pattern) used **only** for the five tokens feeding chart configs: `--income-green`, `--expense-coral`, `--hairline`, `--ink-muted`, `--font-text`. Preserves the Verbatim Token Rule single source of truth. Category palette stays pure TS per D3.
 - **D7 (ratified 2026-07-12):** `tapTooltip.ts` returns a cleanup function (removing both canvas-level and document-level listeners) consumed by the component `$effect` teardown. Lifecycle adaptation within the verbatim-logic mandate.
 
 ## Task 0 — Governance + setup
@@ -40,11 +40,13 @@
 **Verification / evidence (Task 0):**
 - Extract the three chart-container heights (desktop and ≤480px carousel slide) from the legacy reference CSS in `backend/src/DashboardPage.html`; record the verbatim values into the table below; bump plan to v2. **These values are deliberately NOT invented here — evidence over narrative.**
 
-| Chart | Desktop container height | ≤480px slide height |
-|---|---|---|
-| Evolución del Flujo Neto (line) | `flex: 1; min-height: 240px;` (`.chart-wrap--line`, line 130) | `min-height: 240px` (no mobile override; base rule in effect) |
-| Gastos por Método de Pago (bar) | `height: 320px;` (`.chart-wrap--bar`, line 126) | `height: 320px` (no mobile override; base rule in effect) |
-| Gastos por Categoría (doughnut) | `height: 312px;` (`.chart-wrap--doughnut`, line 127) | `height: 280px` (`@media (max-width: 768px)` override, line 213 — cascades to ≤480px; no separate 480px rule) |
+| Chart | Desktop container height | ≤480px slide height | Slide height (ratified R2) |
+|---|---|---|---|
+| Evolución del Flujo Neto (line) | `flex: 1; min-height: 240px;` (`.chart-wrap--line`, line 130) | `min-height: 240px` (no mobile override; base rule in effect) | `height: 240px` |
+| Gastos por Método de Pago (bar) | `height: 320px;` (`.chart-wrap--bar`, line 126) | `height: 320px` (no mobile override; base rule in effect) | `height: 320px` |
+| Gastos por Categoría (doughnut) | `height: 312px;` (`.chart-wrap--doughnut`, line 127) | `height: 280px` (`@media (max-width: 768px)` override, line 213 — cascades to ≤480px; no separate 480px rule) | `height: 280px` |
+
+**R2 ratification (2026-07-12):** the "Slide height" column is the fixed height of each ≤480px carousel slide (D5). The line chart's legacy `flex: 1; min-height: 240px` converts to a fixed `height: 240px` inside its slide — an indeterminate height contradicts D5's fixed-height slide container. Desktop keeps the legacy behavior (`flex: 1; min-height: 240px`) since no carousel exists there.
 
 **Extraction note (verbatim finding, 2026-07-12):** in the legacy reference the `.carousel-slide` class wraps ONLY hero/KPI cards — charts are never carousel slides; at ≤480px they stack single-column keeping the heights above. The "≤480px slide height" column therefore records the *effective legacy height at that viewport*, which the D5 fixed-height slide containers adopt. `flex-shrink: 0` is set on the bar and doughnut wraps; the line wrap uses `flex: 1` to fill its `chart-card` (Round 13).
 
