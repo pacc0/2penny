@@ -580,12 +580,12 @@ Empty-month Top-3 renders a dignified empty state (3 dash rows, 0%, empty bar) �
 |---|---|
 | 7 deployments: `@HEAD`, `@12` (webhook), `@11`, `@21` (json-api), `@1`, `@6`, `@20` (legacy dashboard) | 3 deployments: `@HEAD`, `@12` (webhook), `@21` (json-api) |
 
-`@12` (`AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W`) and `@21` (`AKfycbx6H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF`) byte-identical throughout. Zero URL changes. Three Telegram smoke tests confirmed during the deployment/dead-code work (see Per-task evidence), all verified via authenticated Sheet reads, none via narrative alone; a fourth closure smoke test is pending (Task 4, after Camilo's legacy-repo archival step).
+`@12` (`AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W`) and `@21` (`AKfycbx6H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF`) byte-identical throughout, re-verified at closure (`clasp deployments` → 3 entries, unchanged). Zero URL changes. Four Telegram smoke tests confirmed across the stage, all verified via authenticated Sheet reads, none via narrative alone — closure smoke test (#4, post-archival) landed row `a6065914…` "bombombun" $4.000, Confirmed, 2026-07-13 14:02:02.
 
 ## Legacy repo `pacc0/penny` — ADR-0004 superseded
 
-**Decisión:** ADR-0004 ("mantener el repo legacy activo, no archivarlo aún") queda superseded. Camilo archiva `pacc0/penny` manually in GitHub Settings — Claude Code never receives destructive GitHub permissions, this is a human-only action, out of band from this session's tool access.
-**Verification:** pending Camilo's confirmation; to be recorded here once `gh repo view pacc0/penny --json isArchived` returns `true`.
+**Decisión:** ADR-0004 ("mantener el repo legacy activo, no archivarlo aún") queda superseded. Camilo archivó `pacc0/penny` manually in GitHub Settings — Claude Code never received destructive GitHub permissions, this was a human-only action, out of band from this session's tool access.
+**Verification:** `gh repo view pacc0/penny --json isArchived,archivedAt` → `{"isArchived":true,"archivedAt":"2026-07-13T19:00:14Z"}`. Confirmed 2026-07-13.
 
 ## Deferred (registered, not closed here)
 
