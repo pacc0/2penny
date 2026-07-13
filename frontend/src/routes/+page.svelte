@@ -2,6 +2,7 @@
 	import { formatCurrency } from '$lib/format.js';
 	import NetFlowChart from '$lib/components/NetFlowChart.svelte';
 	import PaymentMethodChart from '$lib/components/PaymentMethodChart.svelte';
+	import CategoryChart from '$lib/components/CategoryChart.svelte';
 
 	/** @type {{ data: { payload: Promise<import('$lib/contract.js').DashboardContract> } }} */
 	let { data } = $props();
@@ -101,9 +102,13 @@
 						<h2>Gastos por método de pago</h2>
 						<span class="ghost ghost-chart-bar">&nbsp;</span>
 					</div>
+					<div class="chart-card">
+						<h2>Gastos por categoría</h2>
+						<span class="ghost ghost-chart-doughnut">&nbsp;</span>
+					</div>
 				</div>
 				<div class="carousel-dots" aria-hidden="true">
-					{#each Array(2) as _, i (i)}
+					{#each Array(3) as _, i (i)}
 						<span class="dot" class:active={i === 0}></span>
 					{/each}
 				</div>
@@ -221,9 +226,13 @@
 							<h2>Gastos por método de pago</h2>
 							<PaymentMethodChart rows={payload.expenses_by_account} />
 						</div>
+						<div class="chart-card">
+							<h2>Gastos por categoría</h2>
+							<CategoryChart rows={payload.expenses_by_category} />
+						</div>
 					</div>
 					<div class="carousel-dots" aria-hidden="true">
-						{#each Array(2) as _, i (i)}
+						{#each Array(3) as _, i (i)}
 							<span class="dot" class:active={i === activeChartSlide}></span>
 						{/each}
 					</div>
@@ -627,6 +636,18 @@
 
 	.ghost-chart-bar {
 		height: 320px;
+	}
+
+	/* Mirrors CategoryChart's wrap: 312px desktop, 280px ≤768px (legacy
+	   breakpoint; also the R2 slide height at ≤480px). */
+	.ghost-chart-doughnut {
+		height: 312px;
+	}
+
+	@media (max-width: 768px) {
+		.ghost-chart-doughnut {
+			height: 280px;
+		}
 	}
 
 	.ghost-period {

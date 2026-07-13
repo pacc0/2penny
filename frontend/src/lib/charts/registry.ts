@@ -53,6 +53,10 @@ if (typeof document !== 'undefined') {
   // legacy-verbatim (400ms easeOutQuad, disabled under reduced motion).
   if (reducedMotion) {
     Chart.defaults.animation = false;
+    // DoughnutController ships a type-level animation override
+    // (animateRotate/animateScale) that shadows the root default — the
+    // doughnut would still spin under reduced motion without this.
+    Chart.overrides.doughnut.animation = false;
   } else if (Chart.defaults.animation) {
     Chart.defaults.animation.duration = 400;
     Chart.defaults.animation.easing = 'easeOutQuad';
