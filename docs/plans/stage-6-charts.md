@@ -42,7 +42,7 @@
 
 | Chart | Desktop container height | ≤480px slide height | Slide height (ratified R2) |
 |---|---|---|---|
-| Evolución del Flujo Neto (line) | `flex: 1; min-height: 240px;` (`.chart-wrap--line`, line 130) | `min-height: 240px` (no mobile override; base rule in effect) | `height: 240px` |
+| Evolución del Flujo Neto (line) | `flex: 1; min-height: 240px;` (`.chart-wrap--line`, line 130) | `min-height: 240px` (no mobile override; base rule in effect) | `height: 320px` (R4, ratified 2026-07-13 post-authenticated-check: fills the card; supersedes 240px) |
 | Gastos por Método de Pago (bar) | `height: 320px;` (`.chart-wrap--bar`, line 126) | `height: 320px` (no mobile override; base rule in effect) | `height: 320px` |
 | Gastos por Categoría (doughnut) | `height: 312px;` (`.chart-wrap--doughnut`, line 127) | `height: 280px` (`@media (max-width: 768px)` override, line 213 — cascades to ≤480px; no separate 480px rule) | `height: 280px` |
 

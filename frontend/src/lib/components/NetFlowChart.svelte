@@ -70,8 +70,9 @@
 
 <style>
 	/* Legacy .chart-wrap--line: flex:1 fills the card, min-height 240px.
-	   ≤480px: fixed 240px slide height (plan v2 table, ratified R2) — an
-	   indeterminate height contradicts D5's fixed-height slide container. */
+	   ≤480px: fixed 320px (R4, ratified 2026-07-13 post-authenticated-check,
+	   supersedes R2's 240px) — the carousel track stretches every slide to
+	   the tallest (bar, 320px), so 240px left 81px dead space in the card. */
 	.chart-wrap {
 		position: relative;
 		flex: 1;
@@ -81,7 +82,7 @@
 	@media (max-width: 480px) {
 		.chart-wrap {
 			flex: none;
-			height: 240px;
+			height: 320px;
 			min-height: 0;
 		}
 	}

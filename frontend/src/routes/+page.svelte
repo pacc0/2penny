@@ -634,6 +634,13 @@
 		height: 240px;
 	}
 
+	/* R4: the line slide is 320px at ≤480px (fills the stretched card). */
+	@media (max-width: 480px) {
+		.ghost-chart {
+			height: 320px;
+		}
+	}
+
 	.ghost-chart-bar {
 		height: 320px;
 	}
