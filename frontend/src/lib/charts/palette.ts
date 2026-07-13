@@ -48,6 +48,26 @@ export const CATEGORY_COLOR: Record<ExpenseCategory, string> = {
   'Imprevistos / Emergencias': '#F59E0B'
 };
 
+// Category -> short display name for space-constrained surfaces (doughnut
+// tooltip title, Top-3 list). Ratified Stage 7 (stage-7-cutover plan, R4):
+// dominant word of compound names; single-word names stay unchanged.
+export const CATEGORY_SHORT: Record<ExpenseCategory, string> = {
+  'Obligación Mamá': 'Mamá',
+  'Obligación Papá': 'Papá',
+  'Vivienda / Arriendo': 'Vivienda',
+  'Servicios': 'Servicios',
+  'Suscripciones': 'Suscripciones',
+  'Alimentación': 'Alimentación',
+  'Restaurantes / Domicilios': 'Restaurantes',
+  'Transporte': 'Transporte',
+  'Compras Personales': 'Compras',
+  'Salud / Bienestar': 'Salud',
+  'Mascotas': 'Mascotas',
+  'Viajes': 'Viajes',
+  'Ocio / Entretenimiento': 'Ocio',
+  'Imprevistos / Emergencias': 'Imprevistos'
+};
+
 // Category -> emoji lookup for the donut tooltip title. An unmapped category
 // keeps its name in the tooltip title rather than guessing an emoji.
 export const CATEGORY_EMOJI: Record<Category, string> = {

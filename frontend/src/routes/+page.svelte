@@ -1,5 +1,6 @@
 <script>
 	import { formatCurrency } from '$lib/format.js';
+	import { CATEGORY_COLOR, CATEGORY_SHORT } from '$lib/charts/palette';
 	import NetFlowChart from '$lib/components/NetFlowChart.svelte';
 	import PaymentMethodChart from '$lib/components/PaymentMethodChart.svelte';
 	import CategoryChart from '$lib/components/CategoryChart.svelte';
@@ -73,11 +74,15 @@
 
 		<section>
 			<h2>Gastos por categoría</h2>
-			<ul>
-				{#each Array(5) as _, i (i)}
-					<li><span class="ghost ghost-row">&nbsp;</span></li>
+			<div class="top3">
+				{#each Array(3) as _, i (i)}
+					<div class="top3-cell">
+						<span class="label"><span class="ghost ghost-label">&nbsp;</span></span>
+						<span class="top3-pct"><span class="ghost ghost-delta">&nbsp;</span></span>
+						<div class="top3-track"></div>
+					</div>
 				{/each}
-			</ul>
+			</div>
 		</section>
 
 		<section>
@@ -194,13 +199,43 @@
 				</div>
 			</section>
 
+			<!-- Top-3 categories (Stage 7): share of total month expenses,
+			     computed client-side from expenses_by_category (sorted desc by
+			     the backend aggregator). Empty month = dignified empty state
+			     (plan R1): three dash rows, 0%, empty bar. -->
+			{@const top3 = payload.expenses_by_category.slice(0, 3)}
 			<section>
 				<h2>Gastos por categoría</h2>
-				<ul>
-					{#each payload.expenses_by_category as row (row.category)}
-						<li><span>{row.category}</span><span class="value expense-amt">−{fmt(row.amount)}</span></li>
-					{/each}
-				</ul>
+				<div class="top3">
+					{#if top3.length > 0}
+						{#each top3 as row (row.category)}
+							{@const short =
+								CATEGORY_SHORT[
+									/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
+								] ?? row.category}
+							{@const fill =
+								CATEGORY_COLOR[
+									/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
+								] ?? 'var(--ink-muted)'}
+							{@const share = row.amount / payload.kpis.expenses}
+							<div class="top3-cell">
+								<span class="label">{short}</span>
+								<span class="top3-pct">{(share * 100).toFixed(1)}%</span>
+								<div class="top3-track">
+									<div class="top3-fill" style="width: {share * 100}%; background: {fill};"></div>
+								</div>
+							</div>
+						{/each}
+					{:else}
+						{#each Array(3) as _, i (i)}
+							<div class="top3-cell">
+								<span class="label">—</span>
+								<span class="top3-pct">0%</span>
+								<div class="top3-track"></div>
+							</div>
+						{/each}
+					{/if}
+				</div>
 			</section>
 
 			<section>
@@ -426,6 +461,41 @@
 		color: var(--expense-coral);
 	}
 
+	/* Top-3 categories (Stage 7): three stat cells side by side — label,
+	   share of month expenses, small progress bar. Track = --hairline; fill
+	   comes from CATEGORY_COLOR (data dictionary, ADR-0018 D3), inline. */
+	.top3 {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--spacing-md);
+	}
+
+	.top3-cell {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-xs);
+	}
+
+	.top3-pct {
+		font-family: var(--font-text);
+		font-weight: 700;
+		font-size: 1.125rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* 6px bar: glyph-scale dimension like the 7px carousel dot. */
+	.top3-track {
+		height: 6px;
+		border-radius: var(--rounded-pill);
+		background: var(--hairline);
+		overflow: hidden;
+	}
+
+	.top3-fill {
+		height: 100%;
+		border-radius: var(--rounded-pill);
+	}
+
 	ul {
 		list-style: none;
 		padding: 0;
@@ -513,6 +583,10 @@
 		}
 
 		.kpis {
+			gap: var(--spacing-sm);
+		}
+
+		.top3 {
 			gap: var(--spacing-sm);
 		}
 	}
@@ -646,7 +720,7 @@
 	}
 
 	/* Mirrors CategoryChart's wrap: 312px desktop, 280px ≤768px (legacy
-	   breakpoint; also the R2 slide height at ≤480px). */
+	   breakpoint), 320px ≤480px (Stage 7 slide height). */
 	.ghost-chart-doughnut {
 		height: 312px;
 	}
@@ -654,6 +728,12 @@
 	@media (max-width: 768px) {
 		.ghost-chart-doughnut {
 			height: 280px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.ghost-chart-doughnut {
+			height: 320px;
 		}
 	}
 

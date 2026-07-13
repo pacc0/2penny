@@ -1,7 +1,7 @@
 <script>
 	import { Chart, token } from '$lib/charts/registry';
 	import { enableTapTooltip } from '$lib/charts/tapTooltip';
-	import { CATEGORY_COLOR, CATEGORY_EMOJI } from '$lib/charts/palette';
+	import { CATEGORY_COLOR, CATEGORY_EMOJI, CATEGORY_SHORT } from '$lib/charts/palette';
 	import { formatCOP } from '$lib/format.js';
 
 	/** @type {{ rows: Array<{ category: string, amount: number }> }} */
@@ -60,12 +60,15 @@
 					tooltip: {
 						displayColors: false,
 						callbacks: {
+							// Stage 7: emoji + short name (D2 content consciously superseded,
+							// stage-7-cutover plan). Unmapped category keeps its full name.
 							title: (items) => {
-								const name = items[0].label;
-								return (
-									CATEGORY_EMOJI[/** @type {import('$lib/charts/palette').Category} */ (name)] ||
-									name
+								const name = /** @type {import('$lib/charts/palette').ExpenseCategory} */ (
+									items[0].label
 								);
+								const emoji = CATEGORY_EMOJI[name];
+								const short = CATEGORY_SHORT[name];
+								return emoji && short ? emoji + ' ' + short : name;
 							},
 							label: (ctx) => formatCOP(ctx.parsed) + ' (' + formatPct(ctx.parsed / total) + ')'
 						}
@@ -102,6 +105,14 @@
 	@media (max-width: 768px) {
 		.chart-wrap {
 			height: 280px;
+		}
+	}
+
+	/* Stage 7: the ≤480px carousel slide grows to 320px — same height as the
+	   line/bar slides, removing the ~41px dead space noted in ADR-0019. */
+	@media (max-width: 480px) {
+		.chart-wrap {
+			height: 320px;
 		}
 	}
 </style>
