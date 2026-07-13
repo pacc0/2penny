@@ -15,8 +15,8 @@ NO-cambia.
 | 4 | Datos reales vía SvelteKit server route proxy | ✅ CERRADA 2026-07-11 |
 | 5 | Rediseño visual Night Ledger | ✅ CERRADA 2026-07-12 |
 | 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
-| 7 | Cutover + retiro del dashboard doGet v1.0 | 🟡 SIGUIENTE (re-evaluar ADR-0004) |
-| 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ⚪ (re-evaluar ADR-0003) |
+| 7 | Cutover + retiro del dashboard doGet v1.0 | ✅ CERRADA 2026-07-13 |
+| 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | 🟡 SIGUIENTE (re-evaluar ADR-0003) |
 
 ## Etapa 0 — evidencia de cierre (registrada)
 
@@ -175,6 +175,26 @@ escritura. Ver ADR-0019 en DECISIONS.md.
   clasificación, resumen mensual — NUNCA se tocan, ni en el cutover.
 - **Re-evaluar:** ADR-0004 (archivado del repo legacy).
 
+### Etapa 7 — evidencia de cierre (registrada)
+
+6 commits (`b64fc73`..`a0d89f3`) pusheados a `origin/master`, más un
+addendum de Task 3 pedido por Camilo tras el check en dispositivo (columna
+"Mes" de la tabla de 12 meses comprimida en ≤480px). Deployment @20
+(dashboard v1.0) retirado + sweep de @11/@1/@6 — 7→3 deployments, `@12`
+(webhook) y `@21` (json-api) byte-idénticos en cada paso. `DashboardPage.html`
+(758 líneas) + 5 funciones display-exclusive borradas de `Dashboard.js`;
+loaders/aggregators compartidos intactos. `CATEGORY_SHORT` ratificado,
+Top-3 de categorías reemplaza la lista de ledger, doughnut slide 280→320px
+(espacio muerto 41px→1px). Tres smoke tests de Telegram confirmados vía
+lectura autenticada del Sheet. Deploy final Production/`main` (`845924c7`);
+ambas URLs 302 de Access. Check autenticado de Camilo en el A56 real: 3/3
+PASS (top-3, tooltip, doughnut pinta en dispositivo real — resuelve la
+observación de canvas-vacío de Etapa 6 como artefacto de screenshot, no
+defecto). Ver ADR-0020 en DECISIONS.md — incluye la supersesión consciente
+de D2 (contenido del tooltip) y la concesión de empty-month (R1, diferida).
+ADR-0004 superseded: archivado de `pacc0/penny` es acción manual pendiente
+de Camilo (Code nunca recibe permisos destructivos de GitHub).
+
 ## Etapa 8 — Endurecimiento
 
 - **Objetivo:** guardrails de producción para operar sin supervisión
@@ -193,12 +213,15 @@ escritura. Ver ADR-0019 en DECISIONS.md.
 
 ## Backlog técnico
 
-- **Post-Stage 6 debt (R3):** amend the backend JSON contract to carry a
-  daily cumulative net-flow series and restore the line chart's daily
-  granularity. Requires its own stage/plan: touches the Apps Script JSON
-  endpoint (deployment @21 only — webhook @12 untouchable), the contract
-  doc, and the chart's axis formatting (`formatDayMonth` returns). Monthly
-  semantics is an accepted interim, not the spec.
+- **@21 contract amendment (Stage 6 R3 + Stage 7 R1, bundled):** amend the
+  backend JSON contract ONCE to carry BOTH (a) a daily cumulative net-flow
+  series, restoring the line chart's daily granularity (Stage 6 debt), AND
+  (b) a previous-month category breakdown, unblocking the Top-3 empty-month
+  fallback (Stage 7 concession — currently a dignified empty state, not the
+  spec). Requires its own stage/plan: touches the Apps Script JSON endpoint
+  (deployment @21 only — webhook @12 untouchable), the contract doc, and
+  the chart's axis formatting (`formatDayMonth` returns). One @21 redeploy
+  for both, not two.
 - **`npm run check` sin gate en CI:** candidato registrado al cierre de
   Etapa 5 (ADR-0017, nota operativa 2).
 

@@ -545,3 +545,51 @@ The Task 3 GO dictated `interaction: { mode: 'nearest', intersect: false }` "per
 4. Doughnut-slide dead space (41px, same mechanism as R4) — observation only, awaiting a ruling if it bothers on-device.
 
 **Fecha:** 2026-07-13.
+
+# ADR-0020 — Stage 7 closure: v1.0 dashboard retired, deployments swept, frontend cutover complete
+
+**Status:** CLOSURE RECORD — 2026-07-13. Executed against `docs/plans/stage-7-cutover.md` v1 (ratified).
+**Stage:** 7 (Cutover + retiro del dashboard doGet v1.0) — CERRADA.
+**Supersedes:** ADR-0004 (legacy repo `pacc0/penny` stays active) — see "Legacy repo" section below.
+
+## Per-task evidence (commit hashes)
+
+- `b64fc73` Task G: plan file + Task 0 evidence relocated to `docs/evidence/stage-7/`.
+- Task 1 (no code commit — clasp mutation only, evidence in session log): baseline 7 deployments confirmed identical to Task 0; `clasp undeploy` on `...HtY1ivOy_Sq @20` (legacy dashboard) — `clasp deployments` after: 6 entries, `@12`/`@21` byte-identical; curl on the retired `/exec` URL → `HTTP 404` "No se encontró la página" (Google Drive error page, verbatim). Telegram smoke test #1 confirmed live (bot responded; a bad test message correctly hit the semantic-validation branch, `TelegramNaturalLanguage.js:19`, proving webhook @12 unaffected). Sweep of `@11`, `@1`, `@6` one at a time, `clasp deployments` verified after each — final: 3 entries (`@HEAD`+`@12`+`@21`). Telegram smoke test #2 confirmed via authenticated Sheet read (row `706df91b…` "crema para la abuela" $69.400, Confirmed).
+- `f9aff63` Task 2: deleted `DashboardPage.html` (758 lines) + 5 display-exclusive `Dashboard.js` functions (`doGet_legacy_v1`, `buildDashboardData_`, `aggregateCumulativeNetFlow_`, `buildPendingRows_`, `countPending_`); shared loaders/aggregators/`COL_*` untouched (grep: zero dangling references, exit 1). `clasp push` → @HEAD only; `clasp deployments` verified `@12`/`@21` intact; authenticated `/api/dashboard` unchanged (contract 1.0, 9 keys, `error: null`). Telegram smoke test #3 confirmed (row `03480531…` "Crema Dermaskin" $25.000, Confirmed).
+- `d3279cc` Task 3: `CATEGORY_SHORT` typed const (ratified table verbatim) in `palette.ts`; doughnut tooltip title → emoji + `CATEGORY_SHORT` (see D2 supersession below); doughnut ≤480px slide 280px→320px (dead space measured 41px→1px); Top-3 category component replaces the ledger list (3-column, share of month expenses, `CATEGORY_COLOR` fill on `--hairline` track, dignified empty state per R1). `npm run check`: 0 errors/290 files. Worst-case label ("Suscripciones") measured 116/116px at 395px — no overflow, no stacked fallback needed.
+- `a0d89f3` Task 3 addendum (requested by Camilo after the on-device check): net-flow table at ≤480px was splitting 4 columns equally (25% each), pushing "Neto" off-screen. Recompressed to Mes 16% / amounts 28% each, dropped the `min-width: 480px` that forced the scroll. Verified: `table.scrollWidth === scroller.clientWidth` (364px both), no horizontal overflow.
+- Production deploys (Production, `--branch=main` explicit): `787cfa1c` (Task 3 first pass), `845924c7` (table-compression fix, final). Both `2penny.pages.dev` and the hash URL: `302` → `2penny-pages.cloudflareaccess.com` (wildcard intact, re-verified at closure).
+- CI `frontend-ci`: green through the stage (`29275636696` for `d3279cc`; backend-only commits `b64fc73`/`f9aff63` don't trigger it — path filter is `frontend/**`).
+
+## Camilo's on-device confirmation (Galaxy A56, real data)
+
+Three checks confirmed PASS: Top-3 categories render; doughnut tap shows the new emoji+short-name tooltip; doughnut paints on the real device (resolves the Task 0 empty-canvas observation as a full-page-screenshot artifact, not a defect — confirmed on a real device, not just emulation).
+
+## D2 supersession (conscious, Stage 6 decision revisited)
+
+Stage 6's D2 (ADR-0018) mandated verbatim-logic port of the legacy tooltip content, which used the full category name as the emoji-title. Stage 7 replaces the tooltip title with emoji + `CATEGORY_SHORT` (ratified R4) for consistency with the new Top-3 list, which needs the short form to fit three columns at 395px. This is a deliberate, scoped exception to D2 — the *mechanics* (D7 teardown, canvas+document listeners) remain byte-identical; only the tooltip's *content template* changed.
+
+## Empty-month concession (R1, registered — not resolved this stage)
+
+Empty-month Top-3 renders a dignified empty state (3 dash rows, 0%, empty bar) — not tested against real data this stage (July 2026 had 6 expense categories). The previous-month fallback remains deferred: **target state** = a future backend-only stage amending the json-api contract on `@21` once, delivering BOTH the daily cumulative net-flow feed (ADR-0019 R3 debt) AND the previous-month category breakdown, in the same contract amendment. ROADMAP "Backlog técnico" updated accordingly (see below).
+
+## Deployment sweep — final state
+
+| Before (Task 0 baseline) | After (Stage 7 close) |
+|---|---|
+| 7 deployments: `@HEAD`, `@12` (webhook), `@11`, `@21` (json-api), `@1`, `@6`, `@20` (legacy dashboard) | 3 deployments: `@HEAD`, `@12` (webhook), `@21` (json-api) |
+
+`@12` (`AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W`) and `@21` (`AKfycbx6H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF`) byte-identical throughout. Zero URL changes. Three Telegram smoke tests confirmed during the deployment/dead-code work (see Per-task evidence), all verified via authenticated Sheet reads, none via narrative alone; a fourth closure smoke test is pending (Task 4, after Camilo's legacy-repo archival step).
+
+## Legacy repo `pacc0/penny` — ADR-0004 superseded
+
+**Decisión:** ADR-0004 ("mantener el repo legacy activo, no archivarlo aún") queda superseded. Camilo archiva `pacc0/penny` manually in GitHub Settings — Claude Code never receives destructive GitHub permissions, this is a human-only action, out of band from this session's tool access.
+**Verification:** pending Camilo's confirmation; to be recorded here once `gh repo view pacc0/penny --json isArchived` returns `true`.
+
+## Deferred (registered, not closed here)
+
+1. Empty-month previous-category fallback (R1 concession) → future @21-only contract amendment stage, bundled with the daily cumulative net-flow feed (ADR-0019 R3).
+2. `npm run check` still not a CI gate (ADR-0017 note 2, ADR-0019 deferred item 3) — unchanged.
+
+**Fecha:** 2026-07-13.
