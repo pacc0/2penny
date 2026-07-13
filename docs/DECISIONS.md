@@ -475,3 +475,73 @@ Companion decisions ratified in the same session:
 - On-device (A56): tap tooltip works on all three charts; tap-outside dismisses; desktop hover unaffected.
 - `prefers-reduced-motion`: animations fully disabled.
 - Console clean; CI green; webhook deployment @12 byte-identical (read-only check).
+
+# ADR-0019 — Stage 6 closure: three charts live, Chart.js integrated tree-shaken, webhook untouched
+
+**Status:** CLOSURE RECORD — 2026-07-13. Authenticated real-data check by Camilo on the reference device (Galaxy A56): PASS, with one visual amendment (R4).
+**Stage:** 6 (Charts) — CERRADA.
+
+## Per-task evidence (commit hashes)
+
+- `cf9fef7` docs(governance): Stage 6 plan v1 + ADR-0018 ratified verbatim.
+- `bf26849` Commit 0a: DESIGN.md §5/§6 ported from legacy with npm-delivery + sandbox-scope amendments; height table filled verbatim from `backend/src/DashboardPage.html` (line `flex:1;min-height:240px`, bar `320px`, doughnut `312px` / `280px` ≤768px); plan → v2. Extraction finding: legacy charts were never carousel slides.
+- `45c90b3` Commit 0b: `chart.js@4.5.1` exact pin; `registry.ts` (tree-shaken registration: 3 controllers, 4 elements, 2 scales, Tooltip + `token()` bridge + legacy defaults block, SSR-guarded); `tapTooltip.ts` (logic-verbatim, returns teardown per D7); `palette.ts` (`CATEGORY_COLOR` 14 / `CATEGORY_EMOJI` 18, byte-identical, typed); `formatCOP`/`formatCompactCOP`/`formatDayMonth` ported into `lib/format.js` (absent from Stage 5 — only `formatCurrency` existed). svelte-check 0 errors.
+- `3133f5c` R1/R2 docs: D6 token list → five tokens (`--font-text` added, Verbatim Token Rule rationale); slide-height column ratified.
+- `4fbb012` Task 1 — Evolución del Flujo Neto (line): `NetFlowChart.svelte`, `$effect` lifecycle (chart.destroy + tapTooltip teardown), config logic-verbatim. Evidence: desktop + A56 screenshots, tap/dismiss/hover proofs, reduced-motion `options.animation === false`, console clean.
+- `8feb6a5` R3 docs: monthly net-flow semantics + daily-feed debt registered (see R3 below).
+- `4447fe9` Task 2 — Gastos por Método de Pago (horizontal bar): `PaymentMethodChart.svelte` logic-verbatim; chart-carousel dots activated (Stage 5 dot spec); truncation verified (18-char boundary intact; 30-char → 17+`…`). Same evidence battery.
+- `02a92f0` Task 3 — Gastos por Categoría (doughnut): `CategoryChart.svelte` logic-verbatim; unmapped-category fallback proven with a temporary mock row (`--ink-muted` arc + name-title tooltip; zero production data); emoji/COP/percentage tooltip verified. Same evidence battery.
+- `0c4ea2f` R4 — line slide 240px→320px (see R4 below).
+
+## Bundle (real figures — corrects ADR-0018's optimistic wording)
+
+Pre-stage baseline page node: 9,348 B raw / 2,705 B gzip. Final: 188,726 B raw / 63,922 B gzip. **Stage cost: ~179 kB raw / ~61 kB gzip** — tree-shaken registration trims little from Chart.js core (~60 kB gzip of it); the "well under the full ~70KB" framing in ADR-0018 was optimistic. Accepted: single dependency, exact pin, no runtime CDN.
+
+## Ratified decisions R1–R4
+
+- **R1:** `token()` bridge extended to `--font-text` (five tokens total) — retyping the font stack in TS would violate the Verbatim Token Rule for the same reason as the four hues.
+- **R2:** fixed ≤480px slide heights: line 240px (superseded by R4), bar 320px, doughnut 280px; the line's legacy `flex:1;min-height:240px` converts to a fixed height inside its slide (indeterminate height contradicts D5); desktop keeps legacy behavior.
+- **R3 (temporary scope-protecting concession, NOT a final design decision):** the line chart consumes contract v1.0's `net_flow_series` (12 monthly rows) as-is; the legacy daily cumulative series does not exist in the contract, and reopening the backend contract mid-stage would violate stage governance. Monthly semantics ships in Stage 6 only as an accepted interim; **target state = restoring the daily cumulative feed** via a future contract amendment (ROADMAP "Backlog técnico": touches json-api deployment @21 only — webhook @12 untouchable; `formatDayMonth` returns).
+- **R4 (ratified 2026-07-13, origin: Camilo's authenticated check on the real A56):** line slide 240px→320px at ≤480px. Root cause verified before the change: the carousel track stretches every slide to the tallest (bar, 397px card); the fixed 240px wrap left a measured 81px of dead space. After: 1px. Desktop untouched (fresh-load check: 240px, no dead space). Registered observation, no ruling: the doughnut slide carries 41px dead space by the same mechanism.
+
+## Two legacy bugs found and fixed (both latent in the legacy build)
+
+1. **`Chart.defaults.animation` descriptor replacement:** the legacy wholesale assignment (`= { duration, easing }`) breaks hover color interpolation on the 4.5.1 ESM build — first hover throws `Animation.tick: this._fn is not a function` (reproduced, instrumented, bisected to the `backgroundColor`/`borderColor` hover animations). Fix: mutate `duration`/`easing` on the existing descriptor; values stay legacy-verbatim (400ms easeOutQuad).
+2. **Doughnut animates under `prefers-reduced-motion`:** `DoughnutController` ships a type-level animation override (`animateRotate`) that shadows the root `animation = false`. Fix: `Chart.overrides.doughnut.animation = false` under reduce. Verified: all three charts report `options.animation === false`.
+
+## Contract-key adaptations (invariant 2 — contract consumed as-is)
+
+- Task 1: `net_flow_series` (monthly) replaces legacy daily `cumulativeNetFlow`; axis via `formatMonthAbbr` (es-CO table; `formatDayMonth` needs a day component monthly keys lack).
+- Task 2: `expenses_by_account` rows are `account`/`amount` (legacy `account`/`total`).
+- Task 3: `expenses_by_category` rows are `category`/`amount` (legacy `category`/`total`); percentage precision fixed at 1 decimal — legacy read `settings.percentagePrecision` from the Settings sheet, which the contract does not carry.
+
+## Instruction correction (interaction key, Task 3)
+
+The Task 3 GO dictated `interaction: { mode: 'nearest', intersect: false }` "per the legacy doughnut config" — but the legacy doughnut config carries **no** interaction key (Chart.js defaults: nearest, intersect true); `intersect: false` exists only inside `enableTapTooltip`'s manual touch hit test, and plan v2's Task 3 block lists no interaction either. The dictated key was implemented, produced observable artifacts (hover over the empty center hole popped a nearest-arc tooltip; hover-state residue persisted after tap-dismiss), and was reverted to legacy-verbatim. Both artifacts disappeared.
+
+## Authenticated-check rulings
+
+- (a) Bar-chart x-tick rotation at 395px: **ratified as shipped** (legacy sets `maxRotation: 0` only on the line chart).
+- (b) 18-char label truncation vs the real longest account name: **ratified as shipped**.
+- (c) Percentage precision 1 decimal: **ratified as shipped**.
+- (d) Double "Gastos por categoría" heading (ledger list + chart card): **registered as a Stage 7 item** — structural fix is cutover territory.
+
+## Dependency clarification (invariant 3)
+
+`git diff 0053896..HEAD -- frontend/package.json`: exactly one new entry, `"chart.js": "4.5.1"`. The lockfile additionally carries `@kurkle/color@0.3.4` — chart.js's single transitive dependency, shipped with the exact pin. Invariant 3 satisfied as written (package.json gains exactly one entry).
+
+## Deploy + integrity evidence
+
+- Deployments (Production, `--branch=main` explicit): `80ffe8e1` (Tasks 1–3), `611add22` (R4, final). Both `2penny.pages.dev` and the hash URL: 302 → `2penny-pages.cloudflareaccess.com` (wildcard intact).
+- CI `frontend-ci` green through the stage: `29219263699`, `29231679930`, `29232477396`; the closure push run is recorded in the session log.
+- `clasp deployments` (read-only, twice during closure): 7 deployments identical to the Stage 4/5 baseline — webhook `...WLNnIxDDeWDvCPMc4e5W @12` and json-api `@21` unchanged. **Zero clasp mutations in the stage**; local dev data came from the Stage 5 scratchpad mock-upstream pattern (`127.0.0.1:8788`), never real secrets.
+- Real data confirmed by Camilo in an authenticated browser on the reference device.
+
+## Deferred (registered, not closed here)
+
+1. Daily cumulative net-flow feed (R3 target state) → ROADMAP "Backlog técnico".
+2. Double "Gastos por categoría" heading → Stage 7.
+3. `npm run check` still not a CI gate (ADR-0017 note 2) — unchanged; check is 0 errors as of `0c4ea2f`.
+4. Doughnut-slide dead space (41px, same mechanism as R4) — observation only, awaiting a ruling if it bothers on-device.
+
+**Fecha:** 2026-07-13.

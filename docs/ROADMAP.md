@@ -14,8 +14,8 @@ NO-cambia.
 | 3 | Shell Svelte 5 + mock data en Pages tras Access | ✅ CERRADA 2026-07-09 |
 | 4 | Datos reales vía SvelteKit server route proxy | ✅ CERRADA 2026-07-11 |
 | 5 | Rediseño visual Night Ledger | ✅ CERRADA 2026-07-12 |
-| 6 | Charts (Chart.js) | 🟡 EN INICIACIÓN — plan pendiente de ratificación |
-| 7 | Cutover + retiro del dashboard doGet v1.0 | ⚪ (re-evaluar ADR-0004) |
+| 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
+| 7 | Cutover + retiro del dashboard doGet v1.0 | 🟡 SIGUIENTE (re-evaluar ADR-0004) |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ⚪ (re-evaluar ADR-0003) |
 
 ## Etapa 0 — evidencia de cierre (registrada)
@@ -144,6 +144,22 @@ candidato de backlog).
   sigue funcionando.
 - **NO-cambia:** ninguna métrica nueva — todo trazable a
   DATA_CONTRACT.md §2.
+
+### Etapa 6 — evidencia de cierre (registrada)
+
+9 commits (`cf9fef7`..`0c4ea2f`) pusheados a `origin/master`. Tres charts
+en producción (línea, barra horizontal, doughnut) con carousel de 3 slides
+y dots en ≤480px. `chart.js@4.5.1` pin exacto — única entrada nueva en
+package.json (transitiva `@kurkle/color@0.3.4` en el lockfile); costo real
+de bundle ~61 kB gzip sobre baseline. Deployments Production/`main`:
+`80ffe8e1` (Tasks 1–3) y `611add22` (R4, final); 302 de Access en ambas
+URLs; CI verde. Check autenticado de Camilo en el A56 real: PASS + R4
+(slide de línea 240→320px, espacio muerto verificado 81px→1px). R3:
+semántica mensual del flujo neto = concesión temporal, target = feed
+diario acumulado (Backlog técnico). Dos bugs legacy encontrados y
+corregidos (descriptor de animación; doughnut animando bajo
+reduced-motion). Webhook `@12`/json-api `@21` idénticos, cero clasp de
+escritura. Ver ADR-0019 en DECISIONS.md.
 
 ## Etapa 7 — Cutover + retiro del dashboard doGet v1.0
 
