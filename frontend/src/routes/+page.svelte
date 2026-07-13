@@ -652,10 +652,29 @@
 			background: var(--progress-amber);
 		}
 
-		/* Table keeps readable columns and scrolls inside .table-scroll. */
+		/* Mes needs far less room than an amount column (7 chars vs.
+		   currency-formatted figures) — an equal 25% split was the reason
+		   Neto fell off-screen. Dropping the min-width lets the fixed
+		   layout actually use this proportion instead of forcing a wider
+		   table than the viewport; .table-scroll stays as the safety net
+		   for any future overflow. */
 		table {
-			min-width: 480px;
-			font-size: 0.875rem;
+			font-size: 0.8125rem;
+		}
+
+		th:first-child,
+		td:first-child {
+			width: 16%;
+		}
+
+		th:not(:first-child),
+		td:not(:first-child) {
+			width: 28%;
+		}
+
+		th,
+		td {
+			padding: var(--spacing-xs);
 		}
 	}
 
