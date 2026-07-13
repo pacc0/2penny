@@ -408,5 +408,70 @@ activa.
    vía declaración `App.Platform.env` en `app.d.ts` (`878d105`); check
    ahora 0 errores. Añadir check como gate de CI queda como candidato de
    backlog para una etapa futura (fuera de alcance aquí).
-
 **Fecha:** 2026-07-12.
+
+# ADR-0018 — Chart library for the 2penny frontend: Chart.js 4.5.1 via npm, tree-shaken, no wrapper
+
+**Status:** RATIFIED — chat session 2026-07-12 (Camilo). Pending registration in `docs/DECISIONS.md` (Stage 6 plan, Commit 0a).
+**Stage:** 6 (Charts)
+**Supersedes:** the delivery mechanism of legacy ADR-0001's charting validation (jsdelivr CDN inside the HtmlService sandbox). The library choice itself is continuity; the delivery mechanism changes.
+
+## Context
+
+Stage 6 integrates the three dashboard charts (Evolución del Flujo Neto — line; Gastos por Método de Pago — horizontal bar; Gastos por Categoría — doughnut) into the Svelte 5 shell, fed by real data via the `/api/dashboard` proxy.
+
+The legacy dashboard pinned Chart.js 4.5.1 from the jsdelivr CDN because the HtmlService sandbox allowed no build step. 2penny has a real build (SvelteKit + Vite on Cloudflare Pages), so the decision was formally re-opened at Stage 5 closure ("Explicitly NOT decided") and re-evaluated against the five-principles filter rather than inherited by inertia.
+
+Constraints that bind any candidate:
+
+- Must render all three chart types in the frozen DASHBOARD.md v2.2 contract, including a doughnut with per-category palette, no legend, and emoji-title tooltips.
+- Must support the mandatory touch-tooltip pattern from DESIGN.md §5 (`enableTapTooltip`, mouse-only `options.events`, non-passive `touchstart` + manual hit test) — battle-tested on the reference device (Galaxy A56).
+- `prefers-reduced-motion` support, Night Ledger tokens, es-CO formatting.
+- Zero monetary cost; single new dependency at most; acceptable bundle weight on mid-range mobile.
+
+## Options considered
+
+1. **Chart.js 4.5.1 via npm, tree-shaken manual registration, no wrapper — SELECTED.**
+   Covers all three chart types natively. DESIGN.md §5 is already written in Chart.js 4.x vocabulary (borderRadius/spacing/cutout mappings, `Chart.defaults` typography/ink rules), and the hard-won `enableTapTooltip` helper ports logic-verbatim. Verified 2026-07-12: v4.5.1 remains the latest release — the pinned legacy version has zero API drift. npm + `package-lock.json` gives a reproducible exact pin and removes the runtime CDN dependency the legacy ADR accepted as a trade-off (net improvement). Tree-shaken registration (only the three controllers, their elements, two scales, and the Tooltip plugin) keeps the bundle well under the full ~70KB build.
+
+2. **Native Svelte SVG (zero dependencies) — REJECTED (principles 2, 5).**
+   Its only virtue is zero deps. It re-solves solved problems: arc math for the doughnut, axis/scale layout, resize handling, tooltip positioning, and — critically — the touch-race mitigation that took multiple on-device rounds to get right in the legacy. Perpetual maintenance debt on artisanal chart code for one user.
+
+3. **uPlot (~15KB) — REJECTED (hard technical disqualification).**
+   uPlot is a time-series/XY engine by design; it does not render doughnut/pie charts. Adopting it would force either (a) redefining the category chart's type, which violates the frozen DASHBOARD.md v2.2 content contract this stage may not touch, or (b) a second library for the doughnut alone — two solutions for one problem, failing principles 2 and 3 simultaneously.
+
+4. **D3 (modular) — REJECTED (principles 2, 3, 4).**
+   Low-level power tooling for bespoke data-viz. Every interaction (tooltips, touch, transitions) is hand-built. Massive over-capability for three static personal-finance charts.
+
+5. **Svelte wrappers (svelte-chartjs, LayerChart) — REJECTED (principle 3).**
+   A wrapper inserts a young dependency between Svelte 5 runes and the library to save roughly 30 lines of `$effect`/`onDestroy` lifecycle code per component. Chart.js is instantiated directly in the component lifecycle instead.
+
+6. **CDN continuity (jsdelivr pin, literal legacy port) — REJECTED.**
+   The CDN's only justification was the sandbox, which no longer exists. npm + lockfile is strictly superior: reproducible builds, tree-shaking, no external runtime network dependency.
+
+## Decision
+
+Add `chart.js@4.5.1` (exact pin, `--save-exact`) as the frontend's charting dependency. Register components manually in a single module (`frontend/src/lib/charts/registry.ts`): `LineController`, `BarController`, `DoughnutController`, `LineElement`, `PointElement`, `BarElement`, `ArcElement`, `CategoryScale`, `LinearScale`, `Tooltip`. No wrapper library. Chart instances are created and destroyed directly inside Svelte 5 component lifecycles.
+
+Companion decisions ratified in the same session:
+
+- **Verbatim-logic port:** the legacy `enableTapTooltip` heuristic and the DESIGN.md §5 chart options are ported with their internal logic intact; only the lifecycle adapts to runes.
+- **Category palette home:** `CATEGORY_COLOR` (14 entries) and `CATEGORY_EMOJI` (18 entries) live as strictly-typed TS constants in `lib/` — they are data dictionaries, not surface tokens. Values copied byte-identical from the legacy reference.
+- **Mobile strategy:** `maintainAspectRatio: false` + fixed-height parent container per carousel slide; the canvas fills 100% of that bounding box.
+- **Semantic-hue bridge (P1, ratified):** a `token(name)` helper (single `getComputedStyle(document.documentElement)` read per token at chart init — the legacy pattern) bridges exactly four surface tokens into chart configs: `--income-green`, `--expense-coral`, `--hairline`, `--ink-muted`. This preserves the Verbatim Token Rule's single source of truth (`tokens.css`); no hex value is retyped in TS. The category palette remains a pure TS dictionary per the prior bullet.
+- **Lifecycle adaptation (ratified):** the ported `tapTooltip.ts` returns a cleanup function removing both its listeners (canvas-level and document-level) for use in the component's `$effect` teardown — a lifecycle adaptation within the verbatim-logic mandate, not a heuristic change (the legacy page never unmounts; Svelte components do).
+
+## Consequences
+
+**Benefits:** DESIGN.md §5 remains valid vocabulary with a one-line delivery amendment (CDN → npm) instead of a rewrite; the touch-tooltip asset is preserved; exact-pin reproducibility; runtime CDN dependency eliminated; tree-shaken bundle footprint.
+
+**Trade-offs accepted:** first charting dependency enters `frontend/package.json` (the diff was deliberately zero through Stage 5); canvas rendering means chart internals are not styleable via CSS tokens directly — semantic hues must be bridged into JS (mechanism specified in the Stage 6 plan).
+
+**Risks:** none novel. v4.5.1 is the current release; if a future 4.x patch lands, the exact pin means upgrades are deliberate, ADR-gated decisions, consistent with the Gemini-deprecation lesson.
+
+## Validation required (encoded as Stage 6 plan evidence)
+
+- Bundle: build output showing the chart chunk size with tree-shaken registration.
+- On-device (A56): tap tooltip works on all three charts; tap-outside dismisses; desktop hover unaffected.
+- `prefers-reduced-motion`: animations fully disabled.
+- Console clean; CI green; webhook deployment @12 byte-identical (read-only check).
