@@ -126,3 +126,46 @@ horizontal.
   terminal/ledger; jerarquía por tamaño/peso/espacio, no por ruido de
   color. Anclas positivas: densidad terminal/ledger, densidad informativa
   tipo Bloomberg, contención tipo Linear/Vercel.
+
+## §5 Components
+
+Ported verbatim from legacy `docs/DESIGN.md` v1.3 (`pacc0/penny`) §5
+"Components" at Stage 6 Commit 0a. The option mappings and the touch-tooltip
+pattern remain **binding verbatim**.
+
+> **2penny delivery amendment (Stage 6, ADR-0018):** Chart.js 4.5.1 now
+> enters via npm exact pin (`--save-exact`) + tree-shaken manual registration
+> (`frontend/src/lib/charts/registry.ts`). Any CDN/jsdelivr delivery clause
+> is legacy-scoped and does not apply to 2penny.
+
+Everything below maps to real Chart.js 4.x options or plain CSS — nothing requires plugins or extra libraries.
+
+**Layout spacing comes from the spacing scale:** page padding `spacing.xl`, grid/row gaps `spacing.lg` on desktop and `spacing.md` below the breakpoint, intra-card gaps (label-to-value, icon-to-text) `spacing.xs`–`spacing.sm`, card padding `{spacing.md} {spacing.lg}`. Badge padding is optical, set per-component, and exempt from the scale.
+
+- **KPI cards:** Surface background, Hairline border, `rounded.lg` (14px), label above display value. Hero cards (Gastos; Flujo Neto) use the pastel-tint surfaces with `ink-on-tint` text per the Two-Volume Rule; Flujo Neto swaps green-tint/coral-tint by sign via a CSS class.
+- **Progress bars:** 10px-high track in Raised, `rounded.pill` fill colored by threshold — Alert Red <50%, Progress Amber 50–90%, Income Green >90% (carried from DASHBOARD.md §Row 2).
+- **Badges:** `badge-pending` pill, Label type. One meaning = one color, matching the charts.
+- **Pending table:** Hairline row separators only (no zebra), Raised header, amounts right-aligned tabular. Dates remain stored and transported as ISO 8601 (`YYYY-MM-DD`, unchanged); on-screen the pending table and the trend-line axis both trim display to day + abbreviated es-CO month, no year (e.g. "21 Jul") — a prototype-iteration crowding fix, Camilo-approved.
+- **Charts (Chart.js 4.5.1 mapping):** rounded bars = `borderRadius: 6` + `borderSkipped: false` on the bar dataset; rounded doughnut segments = `borderRadius: 6` + `spacing: 2` on the doughnut dataset; typeface = `Chart.defaults.font.family` set to the body stack; ink/grid = `Chart.defaults.color` = Ink Muted and grid lines at Hairline. Series mapping, frozen at UI-3: **Gastos por Categoría** = doughnut, per-category `CATEGORY_COLOR` palette (§2), no legend, emoji-title tooltips (§2's emoji map, name fallback for anything unmapped); **Gastos por Método de Pago** = horizontal bar (`indexAxis: 'y'`), single-series Expense Coral; **Evolución del Flujo Neto** (cumulative line) unchanged — Income Green, `tension: 0.3`, sign read from the axis rather than a segment-color flip. Chart Extra 1/2 are currently unused by any chart — retained as documented series fillers for a future doughnut needing more than the semantic five hues (Camilo-approved keep, not dead tokens to prune).
+
+- **Touch tooltips — required pattern for any chart with a tooltip:** Chart.js's own default touch binding (touchstart/touchmove inside `options.events`) is passive and unreliable on real devices — confirmed via on-device diagnostic that hit-testing itself was not the problem. Every chart with a tooltip therefore restricts `options.events` to `['mousemove', 'mouseout', 'click']` (mouse-only; desktop hover is unaffected) and drives all touch interaction through one shared helper, `enableTapTooltip(chart, canvas, mode)` (defined once in apps-script/DashboardPage.html). The helper adds a non-passive `touchstart` listener that runs `chart.getElementsAtEventForMode(evt, mode, { intersect: false }, true)`, sets the resulting elements active, and calls `preventDefault`; a second, document-level `touchstart` listener dismisses the tooltip on any tap outside the chart's canvas. `mode` matches whatever interaction mode the chart already uses (`'index'` for the line chart, `'nearest'` for the bar and doughnut charts); `intersect` is always `false`. Applied identically to all three charts with tooltips — Evolución del Flujo Neto (line), Gastos por Método de Pago (bar), Gastos por Categoría (doughnut). Any future chart added to this dashboard that needs a tooltip must reuse this helper rather than re-implementing touch handling.
+
+## §6 Do's and Don'ts
+
+Ported verbatim from legacy `docs/DESIGN.md` v1.3 (`pacc0/penny`) §6 at
+Stage 6 Commit 0a. Sandbox-era delivery phrasing is legacy-scoped; the
+semantic rules remain binding.
+
+### Do:
+- **Do** trace every colored element to one semantic token; a reviewer should name the meaning from the hue alone.
+- **Do** keep black-on-pastel text at ≥ 4.5:1 (current worst case 13.0:1) and re-verify if any tint changes.
+- **Do** express everything as vanilla CSS custom properties + Chart.js 4.x options inside the HtmlService sandbox.
+  - *2penny scope note (Stage 6, ADR-0018): the HtmlService sandbox is legacy-only. In 2penny this rule reads: vanilla CSS custom properties (`tokens.css`) + Chart.js 4.x options inside Svelte 5 components; the four semantic hues feeding chart configs are bridged via the `token()` helper (ADR-0018 D6), never retyped.*
+- **Do** keep all labels Spanish, identifiers English, dates ISO 8601 in storage/payload with day + abbreviated month on display, COP with thousands separators and no decimals (DASHBOARD.md §3.4).
+
+### Don't:
+- **Don't** use pure red (#EF4444) for anything except over-budget and <50% progress.
+- **Don't** let Savings Teal drift green or Income Green drift teal — saving must never read as income.
+- **Don't** add frameworks, build steps, chart plugins, or any JS library beyond Chart.js 4.5.1.
+- **Don't** use box-shadows, gradients (including gradient text), side-stripe borders, nested cards, or uppercase tracked eyebrows.
+- **Don't** add, remove, or redefine any KPI, metric, or data element — DASHBOARD.md v2.2 and DATA_MODEL.md v1.3 own content; this file owns only how it looks.
