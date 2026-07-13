@@ -1,5 +1,6 @@
 <script>
 	import { formatCurrency } from '$lib/format.js';
+	import NetFlowChart from '$lib/components/NetFlowChart.svelte';
 
 	/** @type {{ data: { payload: Promise<import('$lib/contract.js').DashboardContract> } }} */
 	let { data } = $props();
@@ -76,6 +77,19 @@
 					<li><span class="ghost ghost-row">&nbsp;</span></li>
 				{/each}
 			</ul>
+		</section>
+
+		<!-- Chart carousel skeleton mirrors the real chart card (zero CLS):
+		     same card, ghost at the chart wrap's 240px height. -->
+		<section>
+			<div class="carousel-wrap">
+				<div class="carousel-track">
+					<div class="chart-card">
+						<h2>Evolución del flujo neto</h2>
+						<span class="ghost ghost-chart">&nbsp;</span>
+					</div>
+				</div>
+			</div>
 		</section>
 
 		<section>
@@ -173,6 +187,21 @@
 						<li><span>{row.account}</span><span class="value expense-amt">−{fmt(row.amount)}</span></li>
 					{/each}
 				</ul>
+			</section>
+
+			<!-- Charts (Stage 6): carousel structure per D5 — desktop unwraps via
+			     display:contents (no carousel there); ≤480px the track scrolls
+			     with fixed-height slides. Dots land with the second slide
+			     (Task 2) — a single slide cannot scroll. -->
+			<section>
+				<div class="carousel-wrap">
+					<div class="carousel-track">
+						<div class="chart-card">
+							<h2>Evolución del flujo neto</h2>
+							<NetFlowChart series={payload.net_flow_series} />
+						</div>
+					</div>
+				</div>
 			</section>
 
 			<section>
@@ -412,6 +441,20 @@
 		overflow-x: auto;
 	}
 
+	/* Chart card (Stage 6): legacy chart-card pattern (flex column, label
+	   above chart) on the shell's card surface. Desktop height is content-
+	   driven: the chart wrap inside is flex:1 with min-height 240px. */
+	.chart-card {
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		padding: var(--spacing-md);
+		/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
+		background: linear-gradient(var(--surface-raised), var(--surface));
+		border: 1px solid var(--hairline);
+		border-radius: var(--rounded-lg);
+	}
+
 	/* ≤480px carousel, desktop default "not there" (legacy Round 14):
 	   display:contents unwraps wrap/track so the KPI cards stay direct
 	   grid children of .kpis. */
@@ -467,6 +510,14 @@
 		}
 
 		.kpi {
+			flex: 0 0 100%;
+			width: 100%;
+			scroll-snap-align: center;
+		}
+
+		/* Chart cards are fixed-height carousel slides at ≤480px (plan v2
+		   heights, ratified R2). */
+		.chart-card {
 			flex: 0 0 100%;
 			width: 100%;
 			scroll-snap-align: center;
@@ -538,8 +589,14 @@
 	}
 
 	/* Bars inside KPI cards sit on --surface, so they step up one surface. */
-	.kpi .ghost {
+	.kpi .ghost,
+	.chart-card .ghost {
 		background: var(--surface-raised);
+	}
+
+	/* Chart ghost matches the chart wrap's 240px (zero CLS at swap). */
+	.ghost-chart {
+		height: 240px;
 	}
 
 	.ghost-period {

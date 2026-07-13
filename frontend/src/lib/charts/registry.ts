@@ -46,7 +46,17 @@ if (typeof document !== 'undefined') {
   Chart.defaults.font.size = 12;
   Chart.defaults.font.weight = 700;
   Chart.defaults.color = token('--ink-muted');
-  Chart.defaults.animation = reducedMotion ? false : { duration: 400, easing: 'easeOutQuad' };
+  // Legacy assigned a fresh object here; on the 4.5.1 ESM build that
+  // replaces the animation defaults descriptor and breaks hover color
+  // interpolation (first hover: "Animation.tick: this._fn is not a
+  // function"). Mutating preserves the descriptor; the values stay
+  // legacy-verbatim (400ms easeOutQuad, disabled under reduced motion).
+  if (reducedMotion) {
+    Chart.defaults.animation = false;
+  } else if (Chart.defaults.animation) {
+    Chart.defaults.animation.duration = 400;
+    Chart.defaults.animation.easing = 'easeOutQuad';
+  }
 }
 
 export { Chart };
