@@ -1,4 +1,4 @@
-# 2penny — Engineering Handoff (2026-07-13 14:05)
+# 2penny — Engineering Handoff (2026-07-13 14:10)
 
 ## Branch & stage
 - branch: master | roadmap stage: 7 Cutover + retiro del dashboard doGet v1.0 (✅ CERRADA 2026-07-13) — **Stage 8 (Endurecimiento: clasp-guard.yml, GeminiGate, Canary) is 🟡 SIGUIENTE, re-evaluar ADR-0003. No in-flight work.**
@@ -36,13 +36,13 @@ $ git status --short
 (clean)
 
 $ git log --oneline -5
+18119bc docs: engineering handoff - stage 7 closed, stage 8 next, no in-flight work (checkpoint-code)
 6392bb9 docs: stage 7 closure - record pacc0/penny archival + smoke test #4
 e364303 docs: close stage 7 - ADR-0020, ROADMAP stage 7 CERRADA / stage 8 next
 a0d89f3 fix(frontend): stage 7 - compress Mes column so A56 table needs no h-scroll
 d3279cc feat(frontend): stage 7 task 3 - CATEGORY_SHORT, top-3 categories, doughnut amendments
-f9aff63 feat(backend): stage 7 task 2 - remove v1.0 doGet dashboard dead code
 
-$ clasp deployments   (run from backend/, read-only, Stage 7 closure, 2026-07-13)
+$ clasp deployments   (run from backend/, read-only, re-verified 2026-07-13 14:10)
 Found 3 deployments.
 - AKfycbw0c5iuRK2kDx8zDqAwj4ZAOI0fcqWRYISHcU_DMgo @HEAD
 - AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W @12 - Telegram webhook - Anyone
