@@ -130,28 +130,6 @@
 					</tbody>
 				</table>
 			</div>
-			<!-- Desktop-only twin (>=1200px, T4 Row 4): same ghost shape split
-			     into two 6-row halves so the >=1200 grid slot doesn't collapse
-			     during load (zero-CLS doctrine, matches the real split table). -->
-			<div class="table-desktop-split">
-				{#each Array(2) as _, half (half)}
-					<table class="table-half">
-						<thead>
-							<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
-						</thead>
-						<tbody>
-							{#each Array(6) as _, i (i)}
-								<tr>
-									<td><span class="ghost">&nbsp;</span></td>
-									<td><span class="ghost">&nbsp;</span></td>
-									<td><span class="ghost">&nbsp;</span></td>
-									<td><span class="ghost">&nbsp;</span></td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				{/each}
-			</div>
 		</section>
 
 		<section class="pending-section">
@@ -333,28 +311,6 @@
 							{/each}
 						</tbody>
 					</table>
-				</div>
-				<!-- Desktop-only split (>=1200px, T4 Row 4): same 12 rows, two
-				     6-month groups side by side, each with its own header. No
-				     new data — payload.net_flow_series sliced in place. -->
-				<div class="table-desktop-split">
-					{#each [payload.net_flow_series.slice(0, 6), payload.net_flow_series.slice(6, 12)] as half, i (i)}
-						<table class="table-half">
-							<thead>
-								<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
-							</thead>
-							<tbody>
-								{#each half as row (row.month)}
-									<tr>
-										<td>{row.month}</td>
-										<td class="value num">{fmt(row.income)}</td>
-										<td class="value num">{fmt(row.expenses)}</td>
-										<td class="value num">{fmt(row.net_flow)}</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					{/each}
 				</div>
 			</section>
 
@@ -658,22 +614,6 @@
 		overflow-x: auto;
 	}
 
-	/* Desktop-only twin of the 12-month table (T4 Row 4): two 6-month
-	   groups side by side, shown only >=1200px (media query below). */
-	.table-desktop-split {
-		display: none;
-		gap: 20px;
-	}
-
-	.table-half:first-child {
-		border-right: 1px solid var(--hairline);
-		padding-right: 20px;
-	}
-
-	.table-half + .table-half {
-		padding-left: 20px;
-	}
-
 	/* Chart card (Stage 6): legacy chart-card pattern (flex column, label
 	   above chart) on the shell's card surface. Desktop height is content-
 	   driven: the chart wrap inside is flex:1 with min-height 240px. */
@@ -716,6 +656,25 @@
 
 		.top3 {
 			gap: var(--spacing-sm);
+		}
+
+		/* ADR-0027 T3: the ONE sanctioned mobile structural change — header
+		   adopts the desktop pattern (wordmark + right-aligned period, same
+		   baseline) instead of stacking. Verified no wrap at 395px. */
+		header {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+		}
+
+		h1 {
+			font-family: var(--font-numeric);
+			font-size: 32px;
+			font-weight: 700;
+		}
+
+		.period {
+			margin: 0;
 		}
 	}
 
@@ -806,19 +765,27 @@
 		}
 	}
 
-	/* >=1200px (ADR-0026, T4): 5-row desktop grid. Sections dissolve into
-	   direct grid children via display:contents (same technique already
-	   used for the KPI/chart carousels at every width above 480px) so no
-	   markup below 769px needs to change — only these rules gate on the
-	   breakpoint. Explicit grid-row/-column lines (not named areas): the
-	   items placed here are individual unwrapped children, not whole
-	   section blocks. */
+	/* >=1200px (ADR-0027, Iteration 2 T2): 3-column region replaces the
+	   former rows 2-4 (ADR-0026). Sections dissolve into direct grid
+	   children via display:contents (same technique already used for the
+	   KPI/chart carousels at every width above 480px) so no markup below
+	   769px needs to change — only these rules gate on the breakpoint.
+	   Shared explicit grid rows (3/4): Column A (netflow row 3, payment
+	   row 4) and Column C's table both span rows 3-4, so their bottoms
+	   align exactly. Column B's doughnut also spans rows 3-4 (absorbing
+	   that combined height, centered internally) while Top categorías/
+	   Pendientes each get their own dedicated row (5/6) — natural content
+	   height by construction, no stretch, no dead space, zero wrapper
+	   elements. (ADR-0027: a literal flex-container wrapper for Column
+	   A/B was rejected — it would require moving the doughnut out of the
+	   ≤480px chart carousel's DOM subtree, dropping it from 3 slides to
+	   2.) */
 	@media (min-width: 1200px) {
 		main {
 			max-width: 1520px;
 			padding: var(--spacing-xl) 48px;
 			display: grid;
-			grid-template-columns: 2fr 1fr;
+			grid-template-columns: minmax(0, 6fr) minmax(0, 3fr) minmax(0, 4fr);
 			gap: 20px;
 		}
 
@@ -866,8 +833,8 @@
 			order: 4;
 		}
 
-		/* Row 2/3 charts: the section + its carousel wrapper dissolve so
-		   the three .chart-card divs become direct grid children of main. */
+		/* The section + its carousel wrapper dissolve so the three
+		   .chart-card divs become direct grid children of main. */
 		.charts-section,
 		.charts-section .carousel-wrap,
 		.charts-section .carousel-track {
@@ -879,49 +846,100 @@
 			grid-row: 3;
 		}
 
-		.chart-category {
-			grid-column: 2;
-			grid-row: 3;
-		}
-
 		.chart-payment {
 			grid-column: 1;
-			grid-row: 4 / span 2;
+			grid-row: 4;
+		}
+
+		/* Spans rows 3-4 (Column A's full height) and centers its fixed
+		   312px canvas within it — the ratified spec's "flex: 1, absorbs
+		   ALL leftover vertical space," via grid stretch instead of a flex
+		   wrapper (ADR-0027). The heading stays pinned at the card's top;
+		   only the chart-wrap (auto margins) centers in the remaining
+		   space, so "Gastos por categoría" doesn't drift to mid-card. */
+		.chart-category {
+			grid-column: 2;
+			grid-row: 3 / span 2;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.chart-category :global(.chart-wrap) {
+			margin: auto 0;
 		}
 
 		.top3-section {
 			grid-column: 2;
-			grid-row: 4;
+			grid-row: 5;
 		}
 
 		.pending-section {
 			grid-column: 2;
-			grid-row: 5;
+			grid-row: 6;
 		}
 
+		/* Full region height: spans the same two rows as Column A, so its
+		   bottom aligns with the payment-chart card's bottom (~24px
+		   tolerance, T4 gate). */
 		.table-section {
-			grid-column: 1 / -1;
-			grid-row: 6;
+			grid-column: 3;
+			grid-row: 3 / span 2;
 			box-sizing: border-box;
 			padding: var(--spacing-md) var(--spacing-lg);
-			/* Luminance gradient, both endpoints surface tokens (ADR-0015) —
-			   "Flujo neto — últimos 12 meses" ships as one full-width card,
-			   same surface treatment as .kpi/.chart-card. */
+			display: flex;
+			flex-direction: column;
+			/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
 			background: linear-gradient(var(--surface-raised), var(--surface));
 			border: 1px solid var(--hairline);
 			border-radius: var(--rounded-lg);
 		}
 
-		.table-scroll {
-			display: none;
-		}
-
-		.table-desktop-split {
-			display: flex;
-		}
-
-		.table-half {
+		.table-section .table-scroll {
 			flex: 1;
+		}
+
+		/* Rows fill the card height evenly: thead/tbody dissolve so every
+		   <tr> becomes a flex row of <table> itself; the header row keeps
+		   its natural height, the 12 data rows share the rest equally so
+		   the last row ends near the card bottom. Column C is the
+		   narrowest column (4fr of 13) — smaller font/padding than the
+		   base rules (same technique already used at <=480px) keeps four
+		   currency columns readable without triggering table-scroll's
+		   overflow-x at 1200-1280px. */
+		.table-section table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			font-size: 0.8125rem;
+		}
+
+		.table-section th,
+		.table-section td {
+			padding: var(--spacing-xs);
+		}
+
+		.table-section thead,
+		.table-section tbody {
+			display: contents;
+		}
+
+		.table-section tr {
+			display: flex;
+			flex: 1;
+		}
+
+		.table-section thead tr {
+			flex: none;
+		}
+
+		.table-section th,
+		.table-section td {
+			flex: 1;
+		}
+
+		.table-section th:first-child,
+		.table-section td:first-child {
+			flex: 0.7;
 		}
 	}
 

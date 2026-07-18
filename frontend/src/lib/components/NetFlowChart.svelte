@@ -87,4 +87,14 @@
 			min-height: 0;
 		}
 	}
+
+	/* >=1200px (ADR-0027, Column A): explicit 480px min-height gives an
+	   exact 3:2 ratio against the payment chart's 320px (spec: "flex: 3"
+	   vs "flex: 2"), deterministic regardless of the table's natural
+	   height in the shared row-tracks. */
+	@media (min-width: 1200px) {
+		.chart-wrap {
+			min-height: 480px;
+		}
+	}
 </style>
