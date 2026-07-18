@@ -4,11 +4,7 @@
 // TelegramNaturalLanguage.gs for how the result is used.
 
 var SCRIPT_PROPERTY_GEMINI_API_KEY = 'GEMINI_API_KEY';
-// ponytail: pinned model, announced shutdown 2027-05-07 — the accepted
-// maintenance model is a periodic one-line bump here (run
-// smokeTestGeminiCallSites after), no routing/fallback abstraction.
-var GEMINI_MODEL_ = 'gemini-3.1-flash-lite';
-var GEMINI_API_BASE_URL_ = 'https://generativelanguage.googleapis.com/v1beta/models/';
+// GEMINI_MODEL_ / GEMINI_API_BASE_URL_ now live in GeminiGate.js.
 
 /**
  * System instruction for classifyTransactionText_. Authored by
