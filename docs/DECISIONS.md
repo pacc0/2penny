@@ -813,4 +813,34 @@ existed in the payload ("expected: none"); evidence showed
 contract_version: '1.0' already present on all paths. Recorded as a
 governance-side assumption error; code was correct.
 
+## ADR-0023 D6-R1 (T1 ruling, 2026-07-17)
+
+ADRs are immutable — this addendum supersedes D6's enumeration; D6
+itself is left as written above.
+
+D6-R1: T1 evidence showed the pinned-@21 window is `10fd47f..HEAD`
+(@21 pinned since Stage 2 closure; traceability chain intact per
+`docs/DECISIONS.md:134-139`). D6's enumeration was incomplete — it
+named only the Stage 8 GeminiGate divergence and missed that ALL
+ratified Stage 7/8 backend changes ride in this bump. Recorded as a
+governance-side enumeration error. Full accepted manifest for the T4
+redeploy (5 files):
+  - `Dashboard.js` modified (`f9aff63`, Stage 7: legacy display
+    functions deleted; shared aggregators verified intact by that
+    commit's dangling-ref grep)
+  - `DashboardPage.html` deleted (`f9aff63`, Stage 7)
+  - `GeminiClient.js` modified (`676ce6d`, Stage 8 / ADR-0021 D2)
+  - `GeminiGate.js` added (`676ce6d`, Stage 8 / ADR-0021 D2) — inert
+    for doGet per D6
+  - `Canary.js` added (`6af466b`, Stage 8) — trigger-invoked only,
+    inert for doGet
+
+Plus, once T2 lands, Stage 9's own changes. Any file appearing in the
+pre-T4 verification diff beyond this manifest + Stage 9 commits
+remains a STOP condition.
+
+Bonus finding recorded: the deleted `aggregateCumulativeNetFlow_`
+(recoverable at `f9aff63^`) is the production-validated v1.0 daily
+cumulative logic — T2 resurrects it rather than reimplementing.
+
 **Fecha:** 2026-07-17.
