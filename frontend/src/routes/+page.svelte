@@ -73,7 +73,7 @@
 		</section>
 
 		<section class="top3-section">
-			<h2>Gastos por categoría</h2>
+			<h2>Top categorías</h2>
 			<div class="top3">
 				{#each Array(3) as _, i (i)}
 					<div class="top3-cell">
@@ -112,14 +112,14 @@
 		</section>
 
 		<section class="table-section">
-			<h2>Flujo neto — últimos 12 meses</h2>
+			<h2>Flujo neto — últimos 6 meses</h2>
 			<div class="table-scroll">
 				<table>
 					<thead>
 						<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
 					</thead>
 					<tbody>
-						{#each Array(12) as _, i (i)}
+						{#each Array(6) as _, i (i)}
 							<tr>
 								<td><span class="ghost">&nbsp;</span></td>
 								<td><span class="ghost">&nbsp;</span></td>
@@ -210,7 +210,7 @@
 			{@const top3Rows = top3Mode === 'current' ? currentTop3 : previousTop3}
 			{@const top3Total = top3Mode === 'current' ? payload.kpis.expenses : previousTotal}
 			<section class="top3-section">
-				<h2>Gastos por categoría</h2>
+				<h2>Top categorías</h2>
 				{#if top3Mode === 'previous'}
 					<!-- Copy provisional, Camilo's to finalize (same convention as
 					     the Pending caught-up state above). -->
@@ -294,14 +294,14 @@
 			</section>
 
 			<section class="table-section">
-				<h2>Flujo neto — últimos 12 meses</h2>
+				<h2>Flujo neto — últimos 6 meses</h2>
 				<div class="table-scroll">
 					<table>
 						<thead>
 							<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
 						</thead>
 						<tbody>
-							{#each payload.net_flow_series as row (row.month)}
+							{#each payload.net_flow_series.slice(-6) as row (row.month)}
 								<tr>
 									<td>{row.month}</td>
 									<td class="value num">{fmt(row.income)}</td>
@@ -334,8 +334,8 @@
 						{#each payload.pending as row (row.id)}
 							<li>
 								<span>{row.date} · {row.merchant} · {row.description}</span>
-								<span class="value {row.type === 'income' ? 'income-amt' : 'expense-amt'}"
-									>{row.type === 'income' ? '+' : '−'}{fmt(row.amount)}</span
+								<span class="value {row.type === 'Income' ? 'income-amt' : 'expense-amt'}"
+									>{row.type === 'Income' ? '+' : '−'}{fmt(row.amount)}</span
 								>
 							</li>
 						{/each}
@@ -377,6 +377,12 @@
 		align-items: flex-start;
 		gap: var(--spacing-sm);
 		padding: var(--spacing-md) 0;
+	}
+
+	/* ADR-0029 T2: Pendientes' empty state is a single compact row —
+	   no extra vertical padding beyond the other rows' own spacing. */
+	.pending-section .state {
+		padding: var(--spacing-sm) 0;
 	}
 
 	.state-icon {
@@ -575,6 +581,11 @@
 		justify-content: space-between;
 		gap: var(--spacing-md);
 		padding: var(--spacing-sm) var(--spacing-md);
+	}
+
+	/* ADR-0029 T2: hairline only between rows, not a trailing line under
+	   a single (or the last) row. */
+	li:not(:last-child) {
 		border-bottom: 1px solid var(--hairline);
 	}
 
@@ -765,31 +776,26 @@
 		}
 	}
 
-	/* >=1200px (ADR-0028, Iteration 3 T2): 2-column region replaces the
-	   Iteration 2 three-column contract. Sections dissolve into direct
-	   grid children via display:contents (same technique used for the
-	   KPI/chart carousels at every width above 480px) so no markup below
-	   769px needs to change — only these rules gate on the breakpoint.
-	   align-items:start is load-bearing: it stops Grid's default stretch
-	   from forcing Column B's cards to fill row height, which is what let
-	   the doughnut grow oversized in Iteration 2.
+	/* >=1200px (ADR-0029, Iteration 4 T2): same 2-column region as
+	   Iteration 3, but align-items:stretch (not start) plus exactly one
+	   elastic card per column (net-flow line chart in Column A, the
+	   6-month table in Column B). Sections dissolve into direct grid
+	   children via display:contents (same technique used at every width
+	   above 480px) so no markup below 769px needs to change.
 
-	   Row scheme: 4 shared implicit rows (3-6). Column A's 2 charts each
-	   SPAN 2 of those rows (netflow: 3-4, payment: 5-6) instead of one
-	   row each — matching Column B's finer 4-row grain so Grid's track-
-	   growth algorithm only needs to add a little slack to rows 3/4
-	   (netflow's 480px min-height vs doughnut+top3's smaller combined
-	   natural height) rather than forcing one row to netflow's entire
-	   height, as Iteration 2's `row 3/span 2` on the doughnut alone did.
-	   Rows 5/6 (table+pending vs payment) need no growth at all — their
-	   combined natural height already exceeds payment's 320px, so payment
-	   just leaves blank space at Column A's own bottom (fine — "column
-	   bottoms do not need to align," ADR-0028). A literal flex wrapper
-	   for Column B was rejected again (ADR-0027/0028): it would require
-	   moving the doughnut out of the ≤480px chart carousel's DOM subtree,
-	   dropping it from 3 slides to 2. Measured residual gap between the
-	   doughnut and Top categorías is logged as a DEVIATION where it
-	   exceeds the ideal 20px. */
+	   Row scheme: 3 shared rows. Row 3 (netflow+doughnut) and row 4
+	   (payment+Top categorías) are NOT guaranteed to align card-for-card
+	   — the shorter natural-height card in each row just leaves grid-
+	   track space before the next row (not dead space INSIDE any card;
+	   every natural-height card is align-self:start, exactly its own
+	   content height). Row 5 (Pendientes+table) IS guaranteed to align:
+	   both are the LAST item in their column, sharing the same terminal
+	   row line, so their bottoms land on the same pixel regardless of
+	   what happened in rows 3-4 — this is what satisfies the "align
+	   within 2px" result contract without a flex wrapper (ADR-0027/0028
+	   constraint carried forward: the doughnut must stay physically
+	   inside the ≤480px chart carousel's DOM). Measured gap values are
+	   logged in ADR-0029. */
 	@media (min-width: 1200px) {
 		main {
 			max-width: 1520px;
@@ -797,7 +803,7 @@
 			display: grid;
 			grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 			gap: 20px;
-			align-items: start;
+			align-items: stretch;
 		}
 
 		/* Grid owns spacing now; per-section margin would double up on gap. */
@@ -852,44 +858,75 @@
 			display: contents;
 		}
 
+		/* THE elastic card in Column A: default align-items:stretch fills
+		   row 3's height (>= its own 320px min-height, component-level). */
 		.chart-netflow {
 			grid-column: 1;
-			grid-row: 3 / span 2;
+			grid-row: 3;
 		}
 
+		/* Natural/fixed — not stretched. */
 		.chart-payment {
 			grid-column: 1;
-			grid-row: 5 / span 2;
+			grid-row: 4;
+			align-self: start;
 		}
 
-		/* Natural content height only (align-items:start, no span, no
-		   flex-grow) — the exact fix for Iteration 2's oversized card.
-		   Canvas wrapper drops to 280px fixed (component-level change). */
+		/* Pendientes: natural height, last item in Column A — shares the
+		   terminal row with the table (Column B's elastic card). */
+		.pending-section {
+			grid-column: 1;
+			grid-row: 5;
+			align-self: start;
+		}
+
+		/* Doughnut: natural height, fills card width (component-level:
+		   aspect-ratio wrapper, layout.padding:0). */
 		.chart-category {
 			grid-column: 2;
 			grid-row: 3;
+			align-self: start;
 		}
 
 		.top3-section {
 			grid-column: 2;
 			grid-row: 4;
+			align-self: start;
 		}
 
-		/* Compact ledger density replaces Iteration 2's fill-height
-		   distribution (that technique existed only to fill a stretched
-		   cell that no longer exists under align-items:start). */
+		/* THE elastic card in Column B: default align-items:stretch fills
+		   row 5's height, which Pendientes (Column A) also terminates —
+		   the alignment guarantee (ADR-0029). */
 		.table-section {
 			grid-column: 2;
 			grid-row: 5;
 			box-sizing: border-box;
 			padding: var(--spacing-md) var(--spacing-lg);
+			display: flex;
+			flex-direction: column;
+			/* No min-height floor (ADR-0029): the card's own box imposes
+			   nothing on row 5 beyond Pendientes' natural height, so the
+			   2px alignment gate holds exactly regardless of content —
+			   verified 0px delta at 0, 3, and 6 mock pending items. Table
+			   rows compress accordingly when Pendientes is short (1px at
+			   0 items, 10px at 3, 31px at 6) — a considered trade-off,
+			   not an oversight; see ADR-0029 revision note. */
 			/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
 			background: linear-gradient(var(--surface-raised), var(--surface));
 			border: 1px solid var(--hairline);
 			border-radius: var(--rounded-lg);
 		}
 
+		.table-section .table-scroll {
+			flex: 1;
+			min-height: 0;
+		}
+
 		.table-section table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			min-height: 0;
 			font-size: 0.8125rem;
 		}
 
@@ -898,16 +935,55 @@
 			padding: 3px var(--spacing-xs);
 		}
 
+		.table-section thead,
+		.table-section tbody {
+			display: contents;
+		}
+
+		.table-section tr {
+			display: flex;
+		}
+
+		.table-section thead tr {
+			flex: none;
+		}
+
+		/* No min-height floor: the table's own box must impose nothing on
+		   row 5 beyond Pendientes' natural height (ADR-0029) — rows grow
+		   evenly up to the 44px cap; any leftover collects below the last
+		   row (default flex-start), matching the spec's "let inner
+		   top-alignment absorb the rest." Flex items default to
+		   min-height:auto (their own content's intrinsic minimum),
+		   overriding the flex-shrink this depends on — min-height:0
+		   defeats that trap so rows can compress below one text line if
+		   Pendientes' natural height is small. */
+		.table-section tbody tr {
+			flex: 1 1 0;
+			min-height: 0;
+			max-height: 44px;
+		}
+
+		.table-section th,
+		.table-section td {
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		.table-section th,
+		.table-section td {
+			flex: 1;
+		}
+
+		.table-section th:first-child,
+		.table-section td:first-child {
+			flex: 0.7;
+		}
+
 		/* Current month is always the last row (net_flow_series is
 		   chronological) — matches the spec's "current month row gets
 		   font-weight 600" without needing a data-driven class. */
 		.table-section tbody tr:last-child {
 			font-weight: 600;
-		}
-
-		.pending-section {
-			grid-column: 2;
-			grid-row: 6;
 		}
 	}
 

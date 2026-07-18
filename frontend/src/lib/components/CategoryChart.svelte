@@ -47,6 +47,7 @@
 			},
 			options: {
 				maintainAspectRatio: false,
+				layout: { padding: 0 }, // ADR-0029: canvas fills the wrapper edge-to-edge
 				cutout: '58%', // legacy note: was 62% — ring thickness (1-cutout) up ~10%
 				// No interaction key — legacy-verbatim: the doughnut uses Chart.js
 				// defaults (nearest, intersect true) for mouse hover; intersect:false
@@ -116,13 +117,22 @@
 		}
 	}
 
-	/* >=1200px (ADR-0028, Iteration 3): 312px→280px. The card is natural
-	   content height now (align-items:start, no row-span, no flex-grow) —
-	   a smaller fixed canvas keeps the card itself compact, matching the
-	   spec's "card height = title + wrapper + padding, nothing more." */
+	/* >=1200px (ADR-0029, Iteration 4): the doughnut must fill the card's
+	   full width (Column B is narrower than Column A) rather than use a
+	   fixed height — aspect-ratio derives the height from whatever width
+	   the 1fr column provides. Fallback for browsers without aspect-ratio
+	   support (none in this project's target set, but spec-mandated). */
 	@media (min-width: 1200px) {
 		.chart-wrap {
-			height: 280px;
+			height: auto;
+			width: 100%;
+			aspect-ratio: 1.2 / 1;
+		}
+
+		@supports not (aspect-ratio: 1 / 1) {
+			.chart-wrap {
+				min-height: 300px;
+			}
 		}
 	}
 </style>

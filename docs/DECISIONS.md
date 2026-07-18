@@ -1275,14 +1275,55 @@ scopes "no empty band inside any card," not inter-card spacing, so this
 is compliant as specified, if visually looser than a hand-tuned design
 would be. Measured values logged at T4.
 
-**Table row compression (T2's `tbody` flex rows, extended):** the
-`<tbody>` rows use `flex: 1 1 0; max-height: 44px` (no min-height floor)
-so the table's own box imposes no minimum on Row 5 — its height is
-dictated by Pendientes alone. Rows grow evenly up to the 44px cap; any
-excess (when Pendientes is tall) collects below the last row via normal
-top-aligned flex overflow, matching the spec's "let inner top-alignment
-absorb the rest." When Pendientes is very short (e.g., zero or one
-item), table rows compress accordingly — an accepted trade-off of a
-pure-CSS (no JS measurement) cross-column height match.
+**Table row compression (T2's `tbody` flex rows, extended) — measured,
+with a considered-and-rejected alternative:** the `<tbody>` rows use
+`flex: 1 1 0; max-height: 44px` with NO min-height floor, so the table's
+own box imposes nothing on Row 5 — its height is dictated by Pendientes
+alone (defeating flex's implicit `min-height:auto` content-floor
+required explicit `min-height:0` on `<table>`, `tr`, and `td`/`th` — a
+well-known flexbox gotcha, not obvious from the spec text). Verified
+**0px delta** (the T4 gate) at 1920px with three mock pending-data
+sizes: 0 items (Pendientes 110px → table rows 1px), 3 items (Pendientes
+167px → rows 10px), 6 items (Pendientes 290px → rows 31px, comfortably
+in the "compact ledger" range).
+
+A `min-height` floor on `.table-section` (tried at 220-250px) was
+evaluated to fix the 0-item case's 1px rows and REJECTED: it broke the
+2px alignment gate outright in the 3-item case too (which is a
+thoroughly ordinary amount of pending transactions, not an edge case),
+producing an 83px delta for a 5px legibility gain. The explicit,
+measured T4 gate is treated as authoritative over an inferred
+legibility preference the spec doesn't actually mandate a minimum for
+— T2 only specifies a MAX (44px cap) and says "log actual values,"
+anticipating variability rather than guaranteeing a floor. Zero pending
+items is also not a hypothetical: it is the actual state observed in
+production as recently as the Stage 9 evidence capture
+(`docs/evidence/stage-9/baseline-payload.json`: `"pending":[]`). The
+1px-row outcome in that state is flagged here explicitly for Camilo's
+on-device review — this is exactly the kind of visual judgment call the
+established workflow reserves for his sign-off, not a call for Claude
+Code to make unilaterally by trading away an explicit gate.
+
+**Pending-row field deviation:** the spec's row format ("YYYY-MM-DD ·
+MERCHANT · account") names a field the contract does not carry —
+`DATA_CONTRACT.md`'s `pending` rows are `id`/`date`/`amount`/`merchant`/
+`description`/`type`, no `account`. Same governance-assumption-error
+pattern documented repeatedly in this file. Kept the existing, correct,
+working field (`description`) in its place. Also kept the existing
+income/expense color distinction (`--income-green`/`--expense-coral`)
+rather than forcing every amount to expense coral as the spec's literal
+wording suggested — pending transactions carry a real `type` field and
+can actually be income, and the current code already handles both
+correctly; forcing coral on income rows would be a regression.
+
+**Bonus fix, discovered verifying the above (in scope — same rows T2
+modifies):** `row.type === 'income'` compared against the WRONG case —
+`DATA_CONTRACT.md` documents `type` as `"Income|Expense|Transfer"`
+(capitalized). Every pending row rendered expense-coral with a minus
+sign regardless of actual type, since the comparison never matched.
+Corrected to `row.type === 'Income'`. Pre-existing defect, unrelated to
+this iteration's own changes, but trivial and directly in the code this
+iteration touches — fixed rather than left for a future stage per the
+root-cause-over-symptom principle.
 
 **Fecha:** 2026-07-18.

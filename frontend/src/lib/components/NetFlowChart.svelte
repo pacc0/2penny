@@ -88,13 +88,13 @@
 		}
 	}
 
-	/* >=1200px (ADR-0027, Column A): explicit 480px min-height gives an
-	   exact 3:2 ratio against the payment chart's 320px (spec: "flex: 3"
-	   vs "flex: 2"), deterministic regardless of the table's natural
-	   height in the shared row-tracks. */
+	/* >=1200px (ADR-0029, Iteration 4): this is now THE elastic card in
+	   Column A — 320px matches the payment card's own height as a floor;
+	   the card's grid cell (align-items:stretch, default) grows it
+	   further if row 3 ends up taller (e.g. the doughnut needs more). */
 	@media (min-width: 1200px) {
 		.chart-wrap {
-			min-height: 480px;
+			min-height: 320px;
 		}
 	}
 </style>
