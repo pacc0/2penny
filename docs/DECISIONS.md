@@ -1215,3 +1215,74 @@ The "Gastos por cuenta" text-list section is deleted at all viewports
 the same per-account data).
 
 **Fecha:** 2026-07-18.
+
+## ADR-0029 — Desktop grid v4, Option B (supersedes ADR-0028's two-column contract)
+
+**Status:** Ratified by Camilo, 2026-07-18. Stage 10, Iteration 4 (layout
+amendment, final).
+
+**Decision (four parts):**
+
+**a. Pendientes moves to Column A**, below the payment-methods bars,
+full 2fr width. DOM position is unchanged (mobile has no section-order
+CSS override, per the established pattern from ADR-0028's tablet-order
+deviation) — only its `grid-column`/`grid-row` placement changes at
+`>=1200px`.
+
+**b. The 12-month table becomes a 6-month table at ALL viewports**
+(content-contract change, frontend-only): the frontend slices the last
+6 entries of the existing `net_flow_series` payload — no backend change,
+no contract version bump. Title becomes "Flujo neto — últimos 6 meses"
+everywhere (mobile, tablet, desktop).
+
+**c. The 3-bar category-summary card is retitled "Top categorías"** at
+all viewports, fixing the duplicated "Gastos por categoría" title it
+shared with the doughnut chart (a defect present since Stage 7, per
+ADR-0020's deferred item 2 — resolved here as a side effect of this
+iteration, not a separately-scoped fix).
+
+**d. Equal-height rule:** each desktop column contains exactly ONE
+elastic card (Column A: the net-flow line chart; Column B: the 6-month
+table); every other card is natural content height. `align-items:
+stretch` replaces ADR-0028's `align-items: start` at the outer grid.
+
+**Implementation — no wrapper, same technique as ADR-0027/0028:** the
+doughnut must remain physically inside `carousel-track`'s DOM (mobile
+carousel: 3 dots/3 cards) — this rules out literal flex-column wrappers
+for either side, same constraint as the prior two iterations. Instead:
+- Row 3: net-flow (elastic, `align-self: stretch`, `min-height: 320px`)
+  shares a row with the doughnut (natural, `align-self: start`).
+- Row 4: payment bars (natural/fixed) shares a row with Top categorías
+  (natural) — both `align-self: start`, no elastic item in this row.
+- Row 5: Pendientes (natural, `align-self: start`) shares the FINAL row
+  with the 6-month table (elastic, `align-self: stretch`).
+
+Because Pendientes and the table share the SAME terminal row-line, and
+neither has anything after it in its own column, their bottoms are
+mathematically guaranteed to align exactly — grid row boundaries are
+shared lines; two items whose spans both end at the same line end at
+the same pixel, independent of whatever happened in earlier rows. This
+is the load-bearing trick that satisfies the "align within 2px" result
+contract without a wrapper.
+
+**Consequence, accepted:** rows 3 and 4 do NOT have this guarantee (the
+doughnut and Top categorías are shorter than their row-mates, netflow
+and payment respectively, leaving grid-track space after them before
+the next row begins). This is empty GRID GAP between cards, not dead
+space INSIDE any card (every natural-height card's own box is exactly
+its content height — zero internal waste) — T4's gate (c) explicitly
+scopes "no empty band inside any card," not inter-card spacing, so this
+is compliant as specified, if visually looser than a hand-tuned design
+would be. Measured values logged at T4.
+
+**Table row compression (T2's `tbody` flex rows, extended):** the
+`<tbody>` rows use `flex: 1 1 0; max-height: 44px` (no min-height floor)
+so the table's own box imposes no minimum on Row 5 — its height is
+dictated by Pendientes alone. Rows grow evenly up to the 44px cap; any
+excess (when Pendientes is tall) collects below the last row via normal
+top-aligned flex overflow, matching the spec's "let inner top-alignment
+absorb the rest." When Pendientes is very short (e.g., zero or one
+item), table rows compress accordingly — an accepted trade-off of a
+pure-CSS (no JS measurement) cross-column height match.
+
+**Fecha:** 2026-07-18.

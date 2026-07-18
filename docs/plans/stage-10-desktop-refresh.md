@@ -356,3 +356,70 @@ STOP CONDITION 1: any mobile structural impact -> STOP.
    (column count, card order, natural-height rule).
 
 Everything else: decide, proceed, log under DEVIATIONS.
+
+## Iteration 4 (layout v4, Option B — final)
+
+Ratified verbatim as the governing instruction block for this
+amendment. See `docs/DECISIONS.md` ADR-0029 for the full rationale and
+the implementation technique (shared terminal grid-row between
+Pendientes and the table guarantees their bottom alignment without a
+wrapper).
+
+Scope: `frontend/` + `docs/` ONLY. No production deploy.
+
+### T2 — Desktop layout v4 (>=1200px only)
+
+Grid region stays: `grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 20px; align-items: stretch` (NOT start). Container/header/hero row unchanged.
+
+**Column A (2fr)** — three cards in order:
+1. Evolución del flujo neto — THE elastic card: `min-height: 320px`,
+   stretches to fill its row; chart wrapper fills remaining card height.
+2. Gastos por método de pago — fixed as today (~320px), natural height.
+3. Pendientes — natural content height, full card width. Each
+   transaction: one row, flex space-between, hairline separators if >1
+   row. Empty state keeps current content, compact, no extra padding.
+
+**Column B (1fr)** — three cards in order:
+1. Gastos por categoría (doughnut) — natural height, fills card width
+   (canvas wrapper `width:100%`, `aspect-ratio: 1.2/1`, fallback
+   `min-height:300px`, `layout.padding:0`). Side gaps <= 24px/side at
+   1920x1080.
+2. Top categorías (retitled per T1c) — natural height, zero dead space.
+3. Flujo neto — últimos 6 meses — THE elastic card, `flex:1 1 auto`.
+   Slices the last 6 entries of `net_flow_series`. Current-month row
+   font-weight 600. Rows distribute evenly, capped at ~44px each,
+   excess (if any) absorbed via top-alignment.
+
+Result contract: Pendientes (col A) bottom and table (col B) bottom
+align within 2px at 1920x1080 and 1280x800.
+
+**Tablet (769-1199px):** single column, order: line chart, bars,
+doughnut, Top categorías, 6-month table, Pendientes.
+
+### T3 — Mobile (<=768px)
+
+Structure: ZERO changes. Content: exactly two sanctioned changes —
+(1) monthly table renders 6 rows with the new title; (2) category-
+summary title becomes "Top categorías". Carousel, DOM order, chart
+sizes: untouched (3 dots/3 cards).
+
+STOP CONDITION 1: any further mobile impact -> STOP.
+
+### T4 — Gates & verification
+
+1. `npm run check` + `npm run build`: exit 0.
+2. Playwright at 1920x1080 AND 1280x800: (a) Pendientes/table bottom
+   delta <= 2px; (b) doughnut side gaps <= 24px/side; (c) no empty band
+   > 24px inside any card; (d) no horizontal scroll/nested scrollbars
+   at 1920/1280/1024/395; (e) at 395x893: 6 data rows, updated titles,
+   carousel 3 dots/3 cards, otherwise structurally identical.
+3. Handoff commit + push origin/master. Do NOT deploy.
+
+### Stop conditions (the only two)
+
+1. Mobile impact beyond the two sanctioned content changes (T3).
+2. An ambiguity that would change the contract: column assignment,
+   card order, the one-elastic-card-per-column rule, or the 6-month
+   slice.
+
+Everything else: decide, proceed, log under DEVIATIONS.
