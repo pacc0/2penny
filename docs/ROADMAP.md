@@ -17,7 +17,7 @@ NO-cambia.
 | 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ✅ CERRADA 2026-07-13 |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ✅ CERRADA 2026-07-17 |
-| 10 | Desktop layout & design refresh (tipografía, tokens, grid >=1200px) | 🟡 EN CURSO — implementación completa, pendiente confirmación de Camilo en A56 tras deploy |
+| 10 | Desktop layout & design refresh (tipografía, tokens, grid >=1200px) | 🟡 EN CURSO — deploy a producción hecho, pendiente confirmación de Camilo (A56 + desktop) |
 
 ## Etapa 0 — evidencia de cierre (registrada)
 
@@ -257,11 +257,15 @@ re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
   `backend/` tocado, sin riesgo de webhook.
 - **NO-cambia:** DOM/estructura mobile (<=768px), contrato de datos,
   Chart.js (mismos 3 tipos, mismo registro tree-shaken), webhook `@12`.
-- **Pendiente de cierre:** deploy a producción (Cloudflare Pages) y
-  confirmación de Camilo en el A56 real — el deploy NO se dispara
-  automático al pushear (corrección de la premisa original, ver
-  ADR-0023 assumption error #4); requiere `wrangler pages deploy
-  --branch=main` explícito, gate humano antes de ejecutarlo.
+- **Deploy a producción:** `f855eb29` (`wrangler pages deploy --branch=main`,
+  autorizado explícitamente por Camilo), commit `f8c6b4a`. Verificado
+  `Production`/`main` en `wrangler pages deployment list`; ambas URLs
+  (`2penny.pages.dev` y el hash) devuelven `302` de Access (wildcard
+  intacto). El deploy NO se dispara automático al pushear (corrección de
+  la premisa original, ver ADR-0023 assumption error #4) — por eso fue un
+  paso manual separado.
+- **Pendiente de cierre:** confirmación de Camilo en el A56 real y en un
+  desktop real (>=1200px).
 
 ## Backlog técnico
 

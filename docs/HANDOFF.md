@@ -1,7 +1,7 @@
 # 2penny — Engineering Handoff (2026-07-18 07:33)
 
 ## Branch & stage
-- branch: master | roadmap stage: 10 Desktop layout & design refresh (🟡 EN CURSO — implementation complete, pending Camilo's production deploy + A56 confirmation).
+- branch: master | roadmap stage: 10 Desktop layout & design refresh (🟡 EN CURSO — deployed to production, pending Camilo's A56 + desktop confirmation).
 
 ## Verified deployment (WEBHOOK INTEGRITY)
 - Apps Script deployment id: `AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W @12` (Telegram webhook — Anyone)
@@ -9,15 +9,13 @@
 - `clasp deployments` re-run at Stage 10 (2026-07-18 07:32, read-only): still 3 deployments (`@HEAD` + `@12` + `@22`). Zero backend files touched this stage — Stage 10 is frontend/docs-only by scope; no clasp write commands (`deploy`/`undeploy`/`create-deployment`/`version`) were ever available or needed.
 
 ## In-flight tasks (with file paths)
-- Stage 10 implementation is done, all 5 code+docs commits landed on `master`, NOT yet pushed to `origin` at time of writing (push happens right after this handoff commit, per the ratified plan's T7).
-- **Not done: production deploy.** No `wrangler pages deploy` was run. The original Stage 10 instruction assumed Cloudflare Pages auto-deploys on push — false (see ADR-0023 assumption error #4, and the correction recorded in `docs/plans/stage-10-desktop-refresh.md` T7). A manual `wrangler pages deploy --branch=main` is required before this is visible in production, and that's a real, hard-to-reverse, externally-visible action — held for Camilo's explicit go-ahead rather than run autonomously.
+- Stage 10 implementation is done, pushed to `origin/master`, and deployed to production (`wrangler pages deploy --branch=main`, deployment `f855eb29`, commit `f8c6b4a`, explicitly authorized by Camilo). Verified `Production`/`main` in `wrangler pages deployment list`; both `2penny.pages.dev` and the hash URL return `302` (Access wildcard intact).
+- **Only remaining step: Camilo's on-device confirmation** (A56 real device + a real desktop browser at >=1200px) — that's the one thing this session can't do itself.
 - Files: `docs/DECISIONS.md` (ADR-0024/0025/0026), `docs/DESIGN.md` (typography + token frontmatter + §4 amendment), `docs/plans/stage-10-desktop-refresh.md`, `frontend/static/fonts/{space-grotesk-variable,ibm-plex-sans-condensed-400,ibm-plex-sans-condensed-600}.woff2` + 2 OFL license files (Nunito/Averia removed — zero remaining consumers), `frontend/src/lib/styles/{tokens.css,fonts.css}`, `frontend/src/lib/styles/base.css` (comment fix), `frontend/src/routes/+layout.svelte` (preload swap), `frontend/src/routes/+page.svelte` (desktop grid, hero tints, split table, 2 eliminations), `frontend/src/lib/components/PaymentMethodChart.svelte` (T5 container sizing).
 
 ## Next planned step
-1. Camilo: review this handoff + the screenshots (scratchpad, see Evidence below — not committed, ephemeral session files).
-2. If satisfied: run `wrangler pages deploy --branch=main` from `frontend/` (or ask Code to, explicitly).
-3. Camilo confirms on the real A56 device (mobile must look byte-identical to pre-Stage-10 minus the two eliminations) and on a real desktop browser (>=1200px grid).
-4. Once confirmed: a follow-up `stage-closer` pass marks Stage 10 ✅ CERRADA in ROADMAP.md (currently 🟡 EN CURSO).
+1. Camilo confirms on the real A56 device (mobile must look byte-identical to pre-Stage-10 minus the two eliminations) and on a real desktop browser (>=1200px grid) at https://2penny.pages.dev.
+2. Once confirmed: a follow-up `stage-closer` pass marks Stage 10 ✅ CERRADA in ROADMAP.md (currently 🟡 EN CURSO).
 
 ## Known landmines
 - clasp footgun: never let the /exec URL silently change — `clasp push` only updates @HEAD; a new `clasp deploy` mints a NEW url. Backend deploys ONLY via the clasp-deploy skill. **Irrelevant this stage** — zero backend files touched, scope was `frontend/` + `docs/` only per the ratified plan's forbidden-zone rule.
