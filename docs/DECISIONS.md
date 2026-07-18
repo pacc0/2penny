@@ -843,4 +843,84 @@ Bonus finding recorded: the deleted `aggregateCumulativeNetFlow_`
 (recoverable at `f9aff63^`) is the production-validated v1.0 daily
 cumulative logic — T2 resurrects it rather than reimplementing.
 
+## ADR-0023 closure notes (T9, 2026-07-18)
+
+ADRs are immutable — this section appends closure findings; D1-D6 and
+D6-R1 above are left as written.
+
+**1. D2 closure review (ratified ruling).** `net_flow_series` acquired
+a NEW consumer in T7 — it is the D3 degradation path (the line chart
+falls back to it when `daily_net_flow` is absent or malformed). It is
+no longer unconsumed dead weight; removing it in a future contract 2.0
+would eliminate the defensive fallback entirely. Status changes from
+"removal candidate" to **"retained as degradation target"** — any
+future removal proposal must supply a replacement degradation
+strategy. The 11/12-zero-rows evidence (baseline capture) stands
+recorded but no longer drives toward removal.
+
+**2. Governance assumption errors #1-#5, enumerated with the pattern.**
+- #1 — `contract_version` "expected: none" (Stage 9 opening task) —
+  it already existed on all three paths.
+- #2 — curling `@HEAD` with `?secret=` (T3 instruction) — wrong param
+  name (`key`, not `secret`); separately, `@HEAD`'s URL is
+  editor-session-only per Stage 1 doctrine, not exercisable by
+  anonymous curl regardless of param name.
+- #3 — a "today" header element (T8 item 0) — assumed from monolith
+  memory; the 2penny header never had one (period.month +
+  generated_at only, zero `new Date()` calls anywhere).
+- #4 — Cloudflare Pages auto-deploy on push (T8 step 2) — never
+  existed; every Production deploy in this repo's history, this stage
+  included, is a manual `wrangler pages deploy --branch=main`.
+- #5 — "push triggers frontend-ci" for the `npm run check` gate (T9
+  Part A) — true only for `frontend/**` paths; a
+  `.github/workflows/**`-only commit doesn't match the path filter,
+  requiring `workflow_dispatch` to exercise the gate's first run.
+
+**Lesson, recorded verbatim:** specs must be written against the
+current system's code/doctrine, not from memory of the prior system
+(the legacy monolith, or an assumed-generic CI/deploy setup).
+**Counterweight, also recorded:** all five were caught by the STOP
+discipline before causing any damage to production, the webhook, or
+the guard — the process worked exactly as designed.
+
+**3. Collapsed-gate rulings (explicit, not drift).** The post-T6 stop
+point collapsed conditional on all-PASS (the stop existed for
+additivity confirmation; the mechanical assertions ARE that
+confirmation). T5 folded into T4 (the guard fired for real on the T4
+push, rather than via a separate `workflow_dispatch` exercise). Both
+were explicit governance rulings made in-session, not scope drift.
+
+**4. `@21` nomenclature note.** `clasp deployments` now lists the
+json-api deployment as `@22` — that is Apps Script's version number,
+not its identity. Identity = deploymentId
+`AKfycbx6H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF`,
+unchanged throughout Stage 9, guard-verified before and after the T4
+redeploy. Future docs should refer to "the json-api deployment" by
+deploymentId, not by `@NN` — the number will keep incrementing on
+every future in-place redeploy while the ID stays sacred.
+
+**5. Evidence index (`docs/evidence/stage-9/`).**
+| File | sha256 |
+|---|---|
+| `baseline-payload.json` | `23989bc7c6ad8e3ea343c8d9c8d14bd99d842a94fa3e78bbe766afe0a118219d` |
+| `t3-head-authorized.json` | `70fe5c2cd2a0d13264456263ec9a88dd5bdb45f4ee6cd369b141a3a0c5e6419f` |
+| `t3-head-unauthorized.json` | `a7db3cbdd9ebc8bbf91baa3cc4c53f2e02cae68f920f394783c943f270fc7461` |
+| `t6-production-payload.json` | `0ad3868519219b238b2e79f5f375f06f8002d7b4274b2a3529af7c0f3461dd79` |
+
+Sequence note: last known contract 1.0 capture at 23:19:00 (pre-T4
+redeploy); T4 completed between 23:19 and 23:23; `t6-production-payload.json`
+(generated_at 23:23:47) is the first confirmed-live contract 1.1 capture.
+
+**6. Telegram smoke-test drift — bonus end-to-end evidence.** Camilo's
+post-redeploy Telegram smoke-test transaction (+1000 COP expense,
+Alimentación/Efectivo) traversed the full pipeline: `@12` ingest →
+Sheet write → served by `@21` v22. Traced mechanically consistent
+across every affected field: `kpis.expenses`/`kpis.net_flow`,
+`expenses_by_category["Alimentación"]`,
+`expenses_by_account["Efectivo"]`, the `net_flow_series` 2026-07 row,
+and `daily_net_flow`'s last entry — all agree exactly (see T6 evidence
+commit `033996b`).
+
+**Fecha:** 2026-07-18.
+
 **Fecha:** 2026-07-17.

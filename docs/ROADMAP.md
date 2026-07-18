@@ -237,15 +237,19 @@ re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
 
 ## Backlog técnico
 
-- **@21 contract amendment (Stage 6 R3 + Stage 7 R1, bundled):** amend the
-  backend JSON contract ONCE to carry BOTH (a) a daily cumulative net-flow
-  series, restoring the line chart's daily granularity (Stage 6 debt), AND
-  (b) a previous-month category breakdown, unblocking the Top-3 empty-month
-  fallback (Stage 7 concession — currently a dignified empty state, not the
-  spec). Requires its own stage/plan: touches the Apps Script JSON endpoint
-  (deployment @21 only — webhook @12 untouchable), the contract doc, and
-  the chart's axis formatting (`formatDayMonth` returns). One @21 redeploy
-  for both, not two.
+- ~~**@21 contract amendment (Stage 6 R3 + Stage 7 R1, bundled):** amend
+  the backend JSON contract ONCE to carry BOTH (a) a daily cumulative
+  net-flow series, restoring the line chart's daily granularity (Stage 6
+  debt), AND (b) a previous-month category breakdown, unblocking the
+  Top-3 empty-month fallback (Stage 7 concession). One @21 redeploy for
+  both, not two.~~ **✅ ENTREGADO — Etapa 9 (2026-07-18).** Contract 1.1
+  live in production: `daily_net_flow` + `previous_month` delivered in a
+  single in-place @21 redeploy (deploymentId
+  `AKfycbx6H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF`
+  unchanged, version 21→22; webhook `@12` untouched throughout). Backend:
+  `dd7e996`. Frontend consumption: `1c291d4`. `formatDayMonth` is live
+  again (zero call sites → restored). Governance: ADR-0023 (+ D6-R1,
+  closure notes). Evidence: `docs/evidence/stage-9/`.
 - **`npm run check` sin gate en CI:** candidato registrado al cierre de
   Etapa 5 (ADR-0017, nota operativa 2).
 - **Optional "today" header label** — must derive from `daily_net_flow`
