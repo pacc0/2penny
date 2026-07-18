@@ -72,7 +72,7 @@
 			</div>
 		</section>
 
-		<section>
+		<section class="top3-section">
 			<h2>Gastos por categoría</h2>
 			<div class="top3">
 				{#each Array(3) as _, i (i)}
@@ -85,29 +85,20 @@
 			</div>
 		</section>
 
-		<section>
-			<h2>Gastos por cuenta</h2>
-			<ul>
-				{#each Array(3) as _, i (i)}
-					<li><span class="ghost ghost-row">&nbsp;</span></li>
-				{/each}
-			</ul>
-		</section>
-
 		<!-- Chart carousel skeleton mirrors the real chart cards (zero CLS):
 		     same cards, ghosts at each chart wrap's fixed height. -->
-		<section>
+		<section class="charts-section">
 			<div class="carousel-wrap">
 				<div class="carousel-track">
-					<div class="chart-card">
+					<div class="chart-card chart-netflow">
 						<h2>Evolución del flujo neto</h2>
 						<span class="ghost ghost-chart">&nbsp;</span>
 					</div>
-					<div class="chart-card">
+					<div class="chart-card chart-payment">
 						<h2>Gastos por método de pago</h2>
 						<span class="ghost ghost-chart-bar">&nbsp;</span>
 					</div>
-					<div class="chart-card">
+					<div class="chart-card chart-category">
 						<h2>Gastos por categoría</h2>
 						<span class="ghost ghost-chart-doughnut">&nbsp;</span>
 					</div>
@@ -120,7 +111,7 @@
 			</div>
 		</section>
 
-		<section>
+		<section class="table-section">
 			<h2>Flujo neto — últimos 12 meses</h2>
 			<div class="table-scroll">
 				<table>
@@ -139,9 +130,31 @@
 					</tbody>
 				</table>
 			</div>
+			<!-- Desktop-only twin (>=1200px, T4 Row 4): same ghost shape split
+			     into two 6-row halves so the >=1200 grid slot doesn't collapse
+			     during load (zero-CLS doctrine, matches the real split table). -->
+			<div class="table-desktop-split">
+				{#each Array(2) as _, half (half)}
+					<table class="table-half">
+						<thead>
+							<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
+						</thead>
+						<tbody>
+							{#each Array(6) as _, i (i)}
+								<tr>
+									<td><span class="ghost">&nbsp;</span></td>
+									<td><span class="ghost">&nbsp;</span></td>
+									<td><span class="ghost">&nbsp;</span></td>
+									<td><span class="ghost">&nbsp;</span></td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				{/each}
+			</div>
 		</section>
 
-		<section>
+		<section class="pending-section">
 			<h2>Pendientes</h2>
 			<ul>
 				{#each Array(3) as _, i (i)}
@@ -156,7 +169,7 @@
 		{:else}
 			<header>
 				<h1>2penny</h1>
-				<p class="period">{payload.period.month} · generado {payload.generated_at}</p>
+				<p class="period">{payload.period.month}</p>
 			</header>
 
 			<!-- KPI deltas: last vs. previous net_flow_series row. Verified in
@@ -176,7 +189,7 @@
 					<div class="carousel-track" onscroll={syncDots}>
 						{#each deltas as card (card.label)}
 							{@const favorable = card.favorableUp ? card.d >= 0 : card.d <= 0}
-							<div class="kpi">
+							<div class="kpi" data-kpi={card.label.toLowerCase().replace(/\s+/g, '-')}>
 								<span class="label">{card.label}</span>
 								<span class="hero">{fmt(card.value)}</span>
 								<span class="delta" class:favorable class:unfavorable={!favorable}>
@@ -218,7 +231,7 @@
 			{@const top3Mode = currentTop3.length > 0 ? 'current' : previousTop3.length > 0 ? 'previous' : 'empty'}
 			{@const top3Rows = top3Mode === 'current' ? currentTop3 : previousTop3}
 			{@const top3Total = top3Mode === 'current' ? payload.kpis.expenses : previousTotal}
-			<section>
+			<section class="top3-section">
 				<h2>Gastos por categoría</h2>
 				{#if top3Mode === 'previous'}
 					<!-- Copy provisional, Camilo's to finalize (same convention as
@@ -260,15 +273,6 @@
 				</div>
 			</section>
 
-			<section>
-				<h2>Gastos por cuenta</h2>
-				<ul>
-					{#each payload.expenses_by_account as row (row.account)}
-						<li><span>{row.account}</span><span class="value expense-amt">−{fmt(row.amount)}</span></li>
-					{/each}
-				</ul>
-			</section>
-
 			<!-- Charts (Stage 6): carousel structure per D5 — desktop unwraps via
 			     display:contents (no carousel there); ≤480px the track scrolls
 			     with fixed-height slides (R2) and dots. -->
@@ -287,18 +291,18 @@
 			{@const netFlowValues = dailySeries
 				? dailySeries.map((row) => row.value)
 				: payload.net_flow_series.map((row) => row.net_flow)}
-			<section>
+			<section class="charts-section">
 				<div class="carousel-wrap">
 					<div class="carousel-track" onscroll={syncChartDots}>
-						<div class="chart-card">
+						<div class="chart-card chart-netflow">
 							<h2>Evolución del flujo neto</h2>
 							<NetFlowChart labels={netFlowLabels} values={netFlowValues} />
 						</div>
-						<div class="chart-card">
+						<div class="chart-card chart-payment">
 							<h2>Gastos por método de pago</h2>
 							<PaymentMethodChart rows={payload.expenses_by_account} />
 						</div>
-						<div class="chart-card">
+						<div class="chart-card chart-category">
 							<h2>Gastos por categoría</h2>
 							<CategoryChart rows={payload.expenses_by_category} />
 						</div>
@@ -311,7 +315,7 @@
 				</div>
 			</section>
 
-			<section>
+			<section class="table-section">
 				<h2>Flujo neto — últimos 12 meses</h2>
 				<div class="table-scroll">
 					<table>
@@ -330,9 +334,31 @@
 						</tbody>
 					</table>
 				</div>
+				<!-- Desktop-only split (>=1200px, T4 Row 4): same 12 rows, two
+				     6-month groups side by side, each with its own header. No
+				     new data — payload.net_flow_series sliced in place. -->
+				<div class="table-desktop-split">
+					{#each [payload.net_flow_series.slice(0, 6), payload.net_flow_series.slice(6, 12)] as half, i (i)}
+						<table class="table-half">
+							<thead>
+								<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
+							</thead>
+							<tbody>
+								{#each half as row (row.month)}
+									<tr>
+										<td>{row.month}</td>
+										<td class="value num">{fmt(row.income)}</td>
+										<td class="value num">{fmt(row.expenses)}</td>
+										<td class="value num">{fmt(row.net_flow)}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					{/each}
+				</div>
 			</section>
 
-			<section>
+			<section class="pending-section">
 				<h2>Pendientes</h2>
 				{#if payload.pending.length === 0}
 					<!-- Decision C: caught-up state carries ZERO CTA — Pending
@@ -440,10 +466,48 @@
 		flex-direction: column;
 		gap: var(--spacing-xs);
 		padding: var(--spacing-md);
-		/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
+		/* Flujo Neto default: luminance gradient, both endpoints surface
+		   tokens (ADR-0015). Ingresos/Gastos/Ahorro override below
+		   (ADR-0025 hero tints — applies at every viewport, not just
+		   desktop; DESIGN.md §5 Two-Volume Rule). */
 		background: linear-gradient(var(--surface-raised), var(--surface));
 		border: 1px solid var(--hairline);
 		border-radius: var(--rounded-lg);
+	}
+
+	/* ADR-0025: pastel-tint hero surfaces + radial luminance overlay,
+	   text-on-pastel doctrine (DESIGN.md §6 "keep black-on-pastel text
+	   at >= 4.5:1"). Flujo Neto (data-kpi="flujo-neto") keeps the dark
+	   surface/ink text/existing delta colors above — no override. */
+	.kpi[data-kpi='ingresos'],
+	.kpi[data-kpi='gastos'],
+	.kpi[data-kpi='ahorro'] {
+		background-image: radial-gradient(120% 120% at 100% 100%, rgba(0, 0, 0, 0.18), transparent 55%);
+	}
+
+	.kpi[data-kpi='ingresos'] {
+		background-color: var(--income-green-tint);
+	}
+
+	.kpi[data-kpi='gastos'] {
+		background-color: var(--expense-coral-tint);
+	}
+
+	.kpi[data-kpi='ahorro'] {
+		background-color: var(--savings-teal-tint);
+	}
+
+	.kpi:is([data-kpi='ingresos'], [data-kpi='gastos'], [data-kpi='ahorro'])
+		:is(.label, .hero, .delta-note) {
+		color: var(--ink-on-tint);
+	}
+
+	.kpi:is([data-kpi='ingresos'], [data-kpi='gastos'], [data-kpi='ahorro']) .delta.favorable {
+		color: var(--delta-positive-on-tint);
+	}
+
+	.kpi:is([data-kpi='ingresos'], [data-kpi='gastos'], [data-kpi='ahorro']) .delta.unfavorable {
+		color: var(--delta-negative-on-tint);
 	}
 
 	.label {
@@ -453,7 +517,9 @@
 		letter-spacing: 0.05em;
 	}
 
-	/* Hero figure: single value per card — Averia 700 (decision A). */
+	/* Hero figure: single value per card — Space Grotesk 700 (ADR-0024,
+	   decision A carried over: proportional display weight reserved for
+	   the one hero figure). */
 	.hero {
 		font-family: var(--font-numeric);
 		font-weight: 700;
@@ -482,8 +548,9 @@
 		color: var(--ink-muted);
 	}
 
-	/* Ledger amount columns: Nunito + tabular-nums, no monospace, no Averia
-	   (decision A). Color goes on the amount only, always with a sign. */
+	/* Ledger amount columns: font-text + tabular-nums, no monospace
+	   (ADR-0024 decision A carried over). Color goes on the amount only,
+	   always with a sign. */
 	.value {
 		font-family: var(--font-text);
 		font-variant-numeric: tabular-nums;
@@ -589,6 +656,22 @@
 	   scrolls horizontally (DESIGN.md §3). */
 	.table-scroll {
 		overflow-x: auto;
+	}
+
+	/* Desktop-only twin of the 12-month table (T4 Row 4): two 6-month
+	   groups side by side, shown only >=1200px (media query below). */
+	.table-desktop-split {
+		display: none;
+		gap: 20px;
+	}
+
+	.table-half:first-child {
+		border-right: 1px solid var(--hairline);
+		padding-right: 20px;
+	}
+
+	.table-half + .table-half {
+		padding-left: 20px;
 	}
 
 	/* Chart card (Stage 6): legacy chart-card pattern (flex column, label
@@ -720,6 +803,125 @@
 		th,
 		td {
 			padding: var(--spacing-xs);
+		}
+	}
+
+	/* >=1200px (ADR-0026, T4): 5-row desktop grid. Sections dissolve into
+	   direct grid children via display:contents (same technique already
+	   used for the KPI/chart carousels at every width above 480px) so no
+	   markup below 769px needs to change — only these rules gate on the
+	   breakpoint. Explicit grid-row/-column lines (not named areas): the
+	   items placed here are individual unwrapped children, not whole
+	   section blocks. */
+	@media (min-width: 1200px) {
+		main {
+			max-width: 1520px;
+			padding: var(--spacing-xl) 48px;
+			display: grid;
+			grid-template-columns: 2fr 1fr;
+			gap: 20px;
+		}
+
+		/* Grid owns spacing now; per-section margin would double up on gap. */
+		section {
+			margin-bottom: 0;
+		}
+
+		header {
+			grid-column: 1 / -1;
+			grid-row: 1;
+			margin-bottom: 0;
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+		}
+
+		h1 {
+			font-family: var(--font-numeric);
+			font-size: 42px;
+			font-weight: 700;
+		}
+
+		.kpis {
+			grid-column: 1 / -1;
+			grid-row: 2;
+			grid-template-columns: repeat(4, 1fr);
+		}
+
+		/* Visual order only — source/DOM order (Ingresos, Gastos, Flujo
+		   neto, Ahorro) stays untouched so mobile/tablet are unaffected. */
+		.kpi[data-kpi='ingresos'] {
+			order: 1;
+		}
+
+		.kpi[data-kpi='gastos'] {
+			order: 2;
+		}
+
+		.kpi[data-kpi='ahorro'] {
+			order: 3;
+		}
+
+		.kpi[data-kpi='flujo-neto'] {
+			order: 4;
+		}
+
+		/* Row 2/3 charts: the section + its carousel wrapper dissolve so
+		   the three .chart-card divs become direct grid children of main. */
+		.charts-section,
+		.charts-section .carousel-wrap,
+		.charts-section .carousel-track {
+			display: contents;
+		}
+
+		.chart-netflow {
+			grid-column: 1;
+			grid-row: 3;
+		}
+
+		.chart-category {
+			grid-column: 2;
+			grid-row: 3;
+		}
+
+		.chart-payment {
+			grid-column: 1;
+			grid-row: 4 / span 2;
+		}
+
+		.top3-section {
+			grid-column: 2;
+			grid-row: 4;
+		}
+
+		.pending-section {
+			grid-column: 2;
+			grid-row: 5;
+		}
+
+		.table-section {
+			grid-column: 1 / -1;
+			grid-row: 6;
+			box-sizing: border-box;
+			padding: var(--spacing-md) var(--spacing-lg);
+			/* Luminance gradient, both endpoints surface tokens (ADR-0015) —
+			   "Flujo neto — últimos 12 meses" ships as one full-width card,
+			   same surface treatment as .kpi/.chart-card. */
+			background: linear-gradient(var(--surface-raised), var(--surface));
+			border: 1px solid var(--hairline);
+			border-radius: var(--rounded-lg);
+		}
+
+		.table-scroll {
+			display: none;
+		}
+
+		.table-desktop-split {
+			display: flex;
+		}
+
+		.table-half {
+			flex: 1;
 		}
 	}
 

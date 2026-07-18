@@ -8,7 +8,8 @@ body {
   color: var(--ink);
   font-family: var(--font-text);
   /* Explicit line-height keeps line boxes the same height across the
-     webfont swap (fallback ↔ Nunito/Averia metrics) — zero-CLS doctrine. */
+     webfont swap (fallback ↔ Space Grotesk/IBM Plex Sans Condensed
+     metrics, ADR-0024) — zero-CLS doctrine. */
   line-height: 1.5;
 }
 
