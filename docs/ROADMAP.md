@@ -248,6 +248,12 @@ re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
   for both, not two.
 - **`npm run check` sin gate en CI:** candidato registrado al cierre de
   Etapa 5 (ADR-0017, nota operativa 2).
+- **Optional "today" header label** — must derive from `daily_net_flow`
+  last entry per DASHBOARD.md §2.4 (never client clock). Registered
+  Stage 9 T8 (item 0 ruling): the 2penny header shows no "today"
+  element today (period.month + generated_at only), so the guarantee
+  holds vacuously; a visible "hoy" label is a product decision, not a
+  correctness gap.
 
 ## Nota de proceso
 
