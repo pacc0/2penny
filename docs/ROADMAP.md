@@ -17,7 +17,7 @@ NO-cambia.
 | 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ✅ CERRADA 2026-07-13 |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ✅ CERRADA 2026-07-17 |
-| 10 | Desktop layout & design refresh (tipografía, tokens, grid >=1200px) | 🟡 EN CURSO — deploy a producción hecho, pendiente confirmación de Camilo (A56 + desktop) |
+| 10 | Desktop layout & design refresh (tipografía, tokens, grid >=1200px) | ✅ CERRADA 2026-07-18 |
 
 ## Etapa 0 — evidencia de cierre (registrada)
 
@@ -264,8 +264,9 @@ re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
   intacto). El deploy NO se dispara automático al pushear (corrección de
   la premisa original, ver ADR-0023 assumption error #4) — por eso fue un
   paso manual separado.
-- **Pendiente de cierre:** confirmación de Camilo en el A56 real y en un
-  desktop real (>=1200px).
+- **Cierre (2026-07-18, ADR-0031):** confirmado por Camilo en el A56 real
+  y en desktop real tras la Iteración 5; deploy final `904b3180`
+  (commit `2b2f0cb`), webhook `@12` intacto.
 - **Iteración 5 (2026-07-18, ADR-0030):** el doughnut sale del carrusel
   móvil (queda como card independiente, cuadrado 1:1, directamente sobre
   Top categorías; el carrusel baja a 2 slides) — eso elimina la

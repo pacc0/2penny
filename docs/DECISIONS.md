@@ -1444,3 +1444,37 @@ placement ignores `order` within the grid; within each column the same
 `order` values happen to produce the correct card sequence.
 
 **Fecha:** 2026-07-18.
+
+
+## ADR-0031 — Cierre Etapa 10 (desktop layout & design refresh)
+
+**Contexto:** la etapa abrió con tipografía nueva (Space Grotesk + IBM
+Plex Sans Condensed), tokens hero-tint y el primer grid real >=1200px
+(commits `f24f486`..`3629c15`, deploy `f855eb29`), y atravesó cinco
+iteraciones de layout de escritorio (ADR-0026..0030) hasta las columnas
+de altura igual por construcción.
+
+**Decisión:** Etapa 10 CERRADA 2026-07-18. Estado final: doughnut fuera
+del carrusel móvil (2 slides restantes; card cuadrada 1:1 sobre Top
+categorías), columnas desktop con wrappers flex y un absorbedor por
+columna (línea/doughnut), tabla y Pendientes con altura natural,
+scroll interno en Pendientes (Opción A). El delta de bordes inferiores
+es 0.00px por construcción — supersede la aceptación 4.1.
+
+**Evidencia:**
+- Deploy final a producción: `904b3180` (`Production`/`main`, commit
+  `2b2f0cb`, `wrangler pages deployment list`); `2penny.pages.dev` y la
+  URL hash devuelven `302` de Access.
+- Gates Iteración 5 (Playwright): delta 0.00px en 1920×1080 y 1440×900
+  con 1 pendiente (producción) y con 11 (estrés vía DOM); carrusel
+  móvil 412px con 2 slides/2 dots; doughnut 280×280 (círculo);
+  reduced-motion pintando ambos charts; 0 errores de consola.
+- `npm run check` 0 errores/0 warnings; `npm run build` exit 0.
+- **Confirmación en dispositivo por Camilo (2026-07-18): A56 real y
+  desktop real — aprobado.**
+- Integridad de webhook al cierre: `clasp deployments` (read-only,
+  2026-07-18) — 3 deployments, webhook
+  `...WLNnIxDDeWDvCPMc4e5W @12` idéntico al baseline; cero comandos
+  clasp de escritura en toda la etapa (scope frontend/docs).
+
+**Fecha:** 2026-07-18.
