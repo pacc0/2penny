@@ -17,6 +17,7 @@ NO-cambia.
 | 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ✅ CERRADA 2026-07-13 |
 | 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ✅ CERRADA 2026-07-17 |
+| 10 | Desktop layout & design refresh (tipografía, tokens, grid >=1200px) | 🟡 EN CURSO — implementación completa, pendiente confirmación de Camilo en A56 tras deploy |
 
 ## Etapa 0 — evidencia de cierre (registrada)
 
@@ -234,6 +235,33 @@ re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
   `guard-failure-test`, ambas constantes alteradas, ambas aserciones
   dispararon independientemente; rama eliminada post-prueba).
 - Detalle completo, desviaciones aceptadas y evidencia: **ADR-0022**.
+
+## Etapa 10 — Desktop layout & design refresh
+
+- **Objetivo:** tipografía nueva (Space Grotesk + IBM Plex Sans
+  Condensed), tokens Night Ledger adicionales (hero tints + delta-on-
+  tint), y un grid de escritorio real (>=1200px) — hasta ahora
+  "desktop" solo renderizaba la columna angosta de 720px de siempre.
+  Alcance: `frontend/` + `docs/` únicamente.
+- **Entregable:** 5-row grid >=1200px (header, 4 hero cards
+  reordenadas visualmente, netflow+doughnut, payment+Top3/Pendientes,
+  tabla de 12 meses partida en dos grupos de 6); tablet (769-1199px) y
+  mobile (<=768px) sin cambios estructurales, solo tokens nuevos
+  aplicados globalmente + dos eliminaciones (Gastos por cuenta,
+  timestamp "generado").
+- **Evidencia:** ADR-0024/0025/0026, plan ratificado
+  (`docs/plans/stage-10-desktop-refresh.md`), 5 commits
+  (`f24f486`..`3629c15`), `npm run check`/`npm run build` exit 0,
+  screenshots 1920×1080/1024×768/395×893 (scratchpad de la sesión).
+- **Rollback:** revertir los 5 commits del rango — ningún archivo
+  `backend/` tocado, sin riesgo de webhook.
+- **NO-cambia:** DOM/estructura mobile (<=768px), contrato de datos,
+  Chart.js (mismos 3 tipos, mismo registro tree-shaken), webhook `@12`.
+- **Pendiente de cierre:** deploy a producción (Cloudflare Pages) y
+  confirmación de Camilo en el A56 real — el deploy NO se dispara
+  automático al pushear (corrección de la premisa original, ver
+  ADR-0023 assumption error #4); requiere `wrangler pages deploy
+  --branch=main` explícito, gate humano antes de ejecutarlo.
 
 ## Backlog técnico
 
