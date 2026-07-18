@@ -63,5 +63,24 @@ ADR-0021 (D1/D3) and `docs/plans/stage-8-hardening.md`.
    the expected `::error::` message, then delete the branch. This proves
    the guard actually catches drift, not just that it runs.
 
-Stage 8 closes (via `stage-closer`) only after steps 3 and 4 have evidence
-attached — a green run and a red run, both real.
+Stage 8 closed 2026-07-17 (ADR-0022) — steps 3 and 4 above have evidence
+attached (guard green run #3 post-`5376520`; guard red run #4 on
+`guard-failure-test`, deleted post-test).
+
+## 8. Apps Script project identity (do not be confused by the title)
+
+The Apps Script project's title is still **"Penny Gmail Ingestion"** — a
+legacy name from before the project became 2penny. It hosts ALL THREE of:
+Telegram webhook (`@12`), json-api (`@21`), AND the Gmail-ingestion
+triggers (`ingestLuloEmails`, `sendMonthlySummary`). The title is cosmetic
+only — renaming carries deployment risk not worth taking for a cosmetic
+fix, so it stays as-is. Future sessions: if `clasp open` or the Apps
+Script UI shows "Penny Gmail Ingestion", that IS the 2penny backend, not a
+different/legacy project.
+
+## 9. Canary operational note
+
+`runCanary()` (`backend/src/Canary.js`) is alert-on-failure only —
+**silence means healthy.** A Telegram message from Canary means the
+pinned Gemini model call failed (likely deprecation, per the June 2026
+incident). No message, no news, nothing to check.

@@ -635,3 +635,107 @@ El workflow NUNCA ejecuta `clasp deploy`/`undeploy`/`create-deployment`/
 imprime en logs.
 
 **Fecha:** 2026-07-17.
+
+# ADR-0022 — Stage 8 closure: clasp-guard live, GeminiGate + Canary shipped, zero deployments
+
+**Status:** CLOSURE RECORD — 2026-07-17. Executed against
+`docs/plans/stage-8-hardening.md` v1 (ratified) + ADR-0021 (D1/D2/D3) +
+FIX-1 ruling (credential-write defect).
+**Stage:** 8 (Endurecimiento) — CERRADA.
+
+## Per-task evidence (commit hashes)
+
+- `cfa29b5` T1: plan + ADR-0021.
+- `ae3be0e` T2: `clasp-guard.yml` activated (replaces Stage 1's inert
+  placeholder).
+- `676ce6d` T3: `GeminiGate.js` — `GEMINI_MODEL_`/`GEMINI_API_BASE_URL_`
+  relocated out of `GeminiClient.js`, value unchanged
+  (`gemini-3.1-flash-lite`). `clasp push` (@HEAD only); `@12`/`@21`
+  verified unchanged.
+- `6af466b` T4: `Canary.js` (`runCanary()`), reusing `getGeminiApiKey_`,
+  `GEMINI_MODEL_`/`GEMINI_API_BASE_URL_`, `sendTelegramMessage_` — no new
+  abstractions. `clasp push` (@HEAD only); `@12`/`@21` verified unchanged.
+- `7484be4` / `4b7209a` T5: OPERATIONS.md §7 manual-steps runbook,
+  ROADMAP.md EN CURSO status, HANDOFF.md refresh.
+- `5376520` FIX-1: credential-write defect corrected (see below).
+
+**Zero deploy commands used throughout the stage** — `clasp push`,
+`clasp status`, `clasp deployments` only. `@12`/`@21` verified
+byte-identical against the ADR-0020 baseline at stage open (T0), mid-stage
+twice (post-`676ce6d` push, post-`6af466b` push), and at close (below).
+
+## FIX-1 — credential-write defect and correction
+
+**Defect:** the original "Write clasp credentials" step interpolated
+`${{ secrets.CLASPRC_JSON }}` directly inside a `run:` shell script
+(`echo "${{ secrets.CLASPRC_JSON }}" > ...`). The shell stripped the
+JSON payload's double quotes before the file was written, producing an
+invalid `.clasprc.json`. **Evidence:** guard run #2 on `master` failed with
+`clasp` parse error "Expected property name" at line 2, column 3.
+**Correction (`5376520`):** the secret is now passed through an `env:`
+block (`CLASPRC: ${{ secrets.CLASPRC_JSON }}`) and written with
+`printf '%s' "$CLASPRC" > "$HOME/.clasprc.json"` — no shell interpolation
+of the secret's content, no quote-stripping. `clasp` pinned to `3.3.0`
+(parity with the local toolchain); `actions/checkout` and
+`actions/setup-node` bumped to `v5` (clears the Node 20 deprecation
+warning, unrelated but bundled in the same fix commit).
+**Rule going forward, this repo, all workflows:** `${{ secrets.* }}` may
+appear ONLY inside an `env:` block, never inside a `run:` script. Audited
+`clasp-guard.yml` end-to-end at fix time — no other direct interpolation
+existed or exists.
+
+## Human evidence (ratified by governance, not re-derived here)
+
+- **Canary trigger:** daily time-driven trigger for `runCanary` active in
+  the Apps Script UI (screenshot provided by Camilo), publishing source
+  "Principal"/@HEAD, per ADR-0021 D2 (the model-config relocation lives on
+  @HEAD; @12 keeps its pinned, hardcoded-model version until the next
+  legitimate in-place bump).
+- **Guard green:** run #3 on `master`, first successful run after fix
+  commit `5376520` — both canonical deploymentIds verified present.
+- **Guard red (forced-failure test):** run #4 on throwaway branch
+  `guard-failure-test` (deleted post-test, both locally and on
+  `origin`) — both `WEBHOOK_DEPLOYMENT_ID` and `JSON_API_DEPLOYMENT_ID`
+  deliberately altered by one character each; both assertions fired
+  independently, each with its ADR-0021-referenced `::error::` message.
+
+## Forced-failure test deviation (accepted)
+
+`docs/OPERATIONS.md` §7 step 4 specified altering ONE constant; the actual
+test altered BOTH. **Accepted per governance ruling** — this is a superset
+of the planned proof: it demonstrated the two assertions fire
+independently (not just that the job fails on some drift) in a single run.
+**Known limitation, registered, not blocking:** single-constant isolation
+(proving the OTHER assertion still passes when only one id is altered) was
+not formally, separately tested. Per Principle 5 (defer complexity that
+can be safely deferred), no further forced-failure runs are required —
+the two `grep -qF` checks are independent by construction (no shared
+state, no short-circuit between them beyond `FAIL=1`), so isolated failure
+of either is a code-reading guarantee, not an inference from this test
+alone.
+
+## Path deviation from plan (accepted)
+
+`docs/plans/stage-8-hardening.md` did not explicitly state a directory for
+`GeminiGate.js`/`Canary.js`; both landed in `backend/src/`, matching every
+other backend file's actual location (`.clasp.json` `rootDir: "src"`).
+Accepted by governance ruling — this is the repo's real structure, not a
+deviation requiring correction.
+
+## Final deployment verification (stage close)
+
+`clasp deployments` re-run 2026-07-17 at closure: 3 entries
+(`@HEAD`+`@12`+`@21`), both pinned ids byte-identical to the ADR-0020
+baseline and to every mid-stage check. See HANDOFF.md for the verbatim
+output.
+
+## Deferred (registered, not opened this stage)
+
+1. `@21` contract amendment (daily cumulative net-flow feed + previous-
+   month category breakdown, bundled, single redeploy) — remains
+   ROADMAP "Backlog técnico". Not opened as Stage 9 here; next-stage
+   candidate only.
+2. Single-constant forced-failure isolation (see deviation note above) —
+   registered as a known gap, not a blocker.
+
+**Fecha:** 2026-07-17.

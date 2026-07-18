@@ -16,7 +16,7 @@ NO-cambia.
 | 5 | Rediseño visual Night Ledger | ✅ CERRADA 2026-07-12 |
 | 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ✅ CERRADA 2026-07-13 |
-| 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | 🟡 EN CURSO — T2–T4 entregados, cierre pendiente de pasos manuales de Camilo |
+| 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | ✅ CERRADA 2026-07-17 |
 
 ## Etapa 0 — evidencia de cierre (registrada)
 
@@ -213,10 +213,10 @@ de Camilo (Code nunca recibe permisos destructivos de GitHub).
   se mantiene, migración diferida** (trigger: repo público o segundo
   colaborador).
 
-### Progreso (2026-07-17, plan `docs/plans/stage-8-hardening.md`)
+### Cierre (2026-07-17, ADR-0022)
 
 Zero-deployment stage: `clasp push` únicamente, `@HEAD`. `@12`/`@21`
-re-verificados byte-idénticos tras cada push.
+re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
 
 - ✅ T0 baseline verificado contra ADR-0020 (sin mismatch).
 - ✅ T1 — plan + ADR-0021 (`cfa29b5`).
@@ -226,12 +226,14 @@ re-verificados byte-idénticos tras cada push.
   relocados desde `GeminiClient.js`, sin cambio de valor (`676ce6d`).
 - ✅ T4 — `Canary.js` (`runCanary()`), reutiliza helpers existentes, alerta
   solo en fallo (`6af466b`).
-- 🟡 **Pendiente (humano, Camilo, ver OPERATIONS.md §7):** crear el secret
-  `CLASPRC_JSON`, crear el trigger diario de `runCanary` en Apps Script,
-  correr `clasp-guard` por `workflow_dispatch` y confirmar verde, y una
-  prueba de fallo forzado (id alterado en rama descartable) confirmando
-  rojo. **Cierre de la etapa vía `stage-closer` solo después de esa
-  evidencia.**
+- ✅ FIX-1 (`5376520`) — defecto de escritura de credenciales corregido
+  (interpolación directa del secret en `run:` → JSON inválido); patrón
+  `env:` + `printf` adoptado, `clasp` fijado a 3.3.0.
+- ✅ Evidencia humana ratificada: trigger diario de `runCanary` activo;
+  guard run #3 verde (post-`5376520`); guard run #4 rojo (fallo forzado en
+  `guard-failure-test`, ambas constantes alteradas, ambas aserciones
+  dispararon independientemente; rama eliminada post-prueba).
+- Detalle completo, desviaciones aceptadas y evidencia: **ADR-0022**.
 
 ## Backlog técnico
 
