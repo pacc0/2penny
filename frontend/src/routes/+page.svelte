@@ -1,5 +1,5 @@
 <script>
-	import { formatCurrency } from '$lib/format.js';
+	import { formatCurrency, formatDayMonth, formatMonthAbbr } from '$lib/format.js';
 	import { CATEGORY_COLOR, CATEGORY_SHORT } from '$lib/charts/palette';
 	import NetFlowChart from '$lib/components/NetFlowChart.svelte';
 	import PaymentMethodChart from '$lib/components/PaymentMethodChart.svelte';
@@ -199,16 +199,38 @@
 				</div>
 			</section>
 
-			<!-- Top-3 categories (Stage 7): share of total month expenses,
-			     computed client-side from expenses_by_category (sorted desc by
-			     the backend aggregator). Empty month = dignified empty state
-			     (plan R1): three dash rows, 0%, empty bar. -->
-			{@const top3 = payload.expenses_by_category.slice(0, 3)}
+			<!-- Top-3 categories (Stage 7 + Stage 9 A3 three-link chain):
+			     1) current month has data -> normal Top-3 (share of current
+			        month's total expenses).
+			     2) current month empty, previous_month has data (contract 1.1,
+			        ADR-0023) -> fallback to previous month's Top-3, share of
+			        ITS total (not current month's, which is 0), with a visible
+			        month label. Defensive (D3): previous_month absent/malformed
+			        degrades to (), same as pre-amendment.
+			     3) both empty -> Stage 7's dignified empty state (plan R1):
+			        three dash rows, 0%, empty bar. -->
+			{@const currentTop3 = payload.expenses_by_category.slice(0, 3)}
+			{@const previousCategories = Array.isArray(payload.previous_month?.expenses_by_category)
+				? payload.previous_month.expenses_by_category
+				: []}
+			{@const previousTotal = previousCategories.reduce((sum, row) => sum + row.amount, 0)}
+			{@const previousTop3 = previousCategories.slice(0, 3)}
+			{@const top3Mode = currentTop3.length > 0 ? 'current' : previousTop3.length > 0 ? 'previous' : 'empty'}
+			{@const top3Rows = top3Mode === 'current' ? currentTop3 : previousTop3}
+			{@const top3Total = top3Mode === 'current' ? payload.kpis.expenses : previousTotal}
 			<section>
 				<h2>Gastos por categoría</h2>
+				{#if top3Mode === 'previous'}
+					<!-- Copy provisional, Camilo's to finalize (same convention as
+					     the Pending caught-up state above). -->
+					<p class="top3-note">
+						Mostrando {formatMonthAbbr(payload.previous_month.month)} {payload.previous_month.month.substring(0, 4)}
+						— sin gastos registrados este mes
+					</p>
+				{/if}
 				<div class="top3">
-					{#if top3.length > 0}
-						{#each top3 as row (row.category)}
+					{#if top3Mode !== 'empty'}
+						{#each top3Rows as row (row.category)}
 							{@const short =
 								CATEGORY_SHORT[
 									/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
@@ -217,7 +239,7 @@
 								CATEGORY_COLOR[
 									/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
 								] ?? 'var(--ink-muted)'}
-							{@const share = row.amount / payload.kpis.expenses}
+							{@const share = row.amount / top3Total}
 							<div class="top3-cell">
 								<span class="label">{short}</span>
 								<span class="top3-pct">{(share * 100).toFixed(1)}%</span>
@@ -250,12 +272,27 @@
 			<!-- Charts (Stage 6): carousel structure per D5 — desktop unwraps via
 			     display:contents (no carousel there); ≤480px the track scrolls
 			     with fixed-height slides (R2) and dots. -->
+			<!-- Net-flow line (Stage 9, ADR-0023 D1/D3): daily_net_flow when
+			     present (contract 1.1) restores the daily x-axis (R3 target
+			     state); defensive fallback to net_flow_series (monthly, R3
+			     concession) if daily_net_flow is absent/malformed — the
+			     pre-amendment behavior, no version gate. "Today" always comes
+			     from the series' own last entry, never new Date(). -->
+			{@const dailySeries = Array.isArray(payload.daily_net_flow) && payload.daily_net_flow.length > 0
+				? payload.daily_net_flow
+				: null}
+			{@const netFlowLabels = dailySeries
+				? dailySeries.map((row) => formatDayMonth(row.date))
+				: payload.net_flow_series.map((row) => formatMonthAbbr(row.month))}
+			{@const netFlowValues = dailySeries
+				? dailySeries.map((row) => row.value)
+				: payload.net_flow_series.map((row) => row.net_flow)}
 			<section>
 				<div class="carousel-wrap">
 					<div class="carousel-track" onscroll={syncChartDots}>
 						<div class="chart-card">
 							<h2>Evolución del flujo neto</h2>
-							<NetFlowChart series={payload.net_flow_series} />
+							<NetFlowChart labels={netFlowLabels} values={netFlowValues} />
 						</div>
 						<div class="chart-card">
 							<h2>Gastos por método de pago</h2>
@@ -459,6 +496,14 @@
 
 	.expense-amt {
 		color: var(--expense-coral);
+	}
+
+	/* Stage 9 A3 fallback-link note — same tokens as .period/.state-line
+	   (no new colors, no new tokens). */
+	.top3-note {
+		margin: 0 0 var(--spacing-sm);
+		font-size: 0.8125rem;
+		color: var(--ink-muted);
 	}
 
 	/* Top-3 categories (Stage 7): three stat cells side by side — label,

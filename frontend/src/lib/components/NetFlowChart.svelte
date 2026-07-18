@@ -1,27 +1,28 @@
 <script>
 	import { Chart, token } from '$lib/charts/registry';
 	import { enableTapTooltip } from '$lib/charts/tapTooltip';
-	import { formatCOP, formatCompactCOP, formatMonthAbbr } from '$lib/format.js';
+	import { formatCOP, formatCompactCOP } from '$lib/format.js';
 
-	/** @type {{ series: Array<{ month: string, net_flow: number }> }} */
-	let { series } = $props();
+	// Labels/values are pre-formatted by the caller (+page.svelte), which
+	// picks daily_net_flow (contract 1.1, ADR-0023) or falls back to
+	// net_flow_series (R3, monthly) when daily_net_flow is absent/malformed
+	// (D3) — this component stays shape-agnostic, no monthly semantics here.
+	/** @type {{ labels: string[], values: number[] }} */
+	let { labels, values } = $props();
 
 	/** @type {HTMLCanvasElement} */
 	let canvas;
 
 	// Evolución del Flujo Neto — line, Income Green, tension 0.3. Config
-	// logic-verbatim from the legacy reference (backend/src/DashboardPage.html);
-	// data source adapted to the contract: net_flow_series (12 rolling months)
-	// instead of the legacy daily cumulativeNetFlow, which the JSON contract
-	// does not carry (invariant: contract consumed as-is).
+	// logic-verbatim from the legacy reference (backend/src/DashboardPage.html).
 	$effect(() => {
 		const chart = new Chart(canvas, {
 			type: 'line',
 			data: {
-				labels: series.map((row) => formatMonthAbbr(row.month)),
+				labels,
 				datasets: [
 					{
-						data: series.map((row) => row.net_flow),
+						data: values,
 						borderColor: token('--income-green'),
 						backgroundColor: token('--income-green'),
 						borderWidth: 2,
