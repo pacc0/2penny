@@ -1327,3 +1327,39 @@ iteration touches — fixed rather than left for a future stage per the
 root-cause-over-symptom principle.
 
 **Fecha:** 2026-07-18.
+
+### Addendum (Iteration 4.1, 2026-07-18) — legibility floor supersedes the alignment-at-any-cost ruling
+
+**Ruling:** data legibility outranks bottom-edge alignment. The
+Iteration 4 design (no min-height floor on the table, so it always
+matches Pendientes exactly, even down to 1px rows) is corrected: the
+6-month table's data rows now carry `min-height: 24px` at all times,
+and the table card carries a computed effective minimum height (title +
+header row + 6 rows at a 26px reference height + card padding —
+hardcoded, derived in a code comment at the CSS rule). The 44px per-row
+cap from Iteration 4 stands.
+
+**On the "line chart absorbs the surplus" mechanism:** investigated and
+found NOT mechanically available under the current (wrapper-free) grid
+architecture. Column A's rows (net-flow, payment, Pendientes) and
+Column B's rows (doughnut, Top categorías, table) are independent CSS
+Grid row-tracks computed by the browser with no cross-row communication
+— net-flow's own row (row 3) has no path to influence row 5's height
+(shared by Pendientes and the table) regardless of how much it
+stretches. This is the same structural fact already established in
+ADR-0027/0028/0029: true cross-column height propagation requires a
+flex-column wrapper per column, which remains incompatible with the
+doughnut's mandatory physical position inside the mobile chart
+carousel's DOM. Making net-flow "stretch" changes nothing about row 5.
+
+**Consequence, measured (not hypothetical):** with the legibility floor
+in place, Pendientes (still natural height, unstretched, per its own
+explicit contract) will fall short of the table's floored bottom edge
+by a growing margin as Pendientes has fewer items — this is the direct,
+unavoidable trade of choosing legibility over alignment when they
+conflict, exactly as this addendum's ruling directs. Per-state
+measurements (0/1/4 mock pending items) are recorded in this addendum's
+closure notes below, with the conflict called out explicitly rather
+than papered over.
+
+**Fecha:** 2026-07-18.
