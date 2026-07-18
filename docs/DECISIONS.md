@@ -1397,3 +1397,50 @@ scrollbars at either desktop viewport in any state; mobile's
 carousel-track horizontal scroller is pre-existing carousel behavior.
 
 **Fecha:** 2026-07-18.
+
+
+## ADR-0030 — Doughnut extraction from the mobile carousel; true equal-height desktop columns (Stage 10 Iteration 5)
+
+**Decision:** the doughnut chart (`chart-category`) is EXTRACTED from the
+≤480px chart carousel and becomes a standalone card. This removes the
+structural constraint documented in ADR-0027 ("mandatory physical
+position inside the mobile chart carousel's DOM") that blocked
+per-column flex wrappers on desktop through Iterations 1–4.1.
+
+**Supersedes the Addendum 4.1 acceptance** of the 141/166/43px
+bottom-edge delta. Rationale: new executive decision by Camilo on
+2026-07-18 after viewing the deployed v4 grid; the 4.1 acceptance was
+conditional on the carousel constraint, which this ADR removes. This is
+a new ruling with a changed premise, not a re-litigation of 4.1 — the
+legibility ruling itself stands and is now satisfied by construction
+(the table returns to natural row height inside a natural-height card;
+the Iteration 4/4.1 elastic-table machinery, 24/44px row clamps, and
+246px card floor are all deleted as obsolete).
+
+**Ratified sub-decisions:**
+- Mobile carousel reduced to 2 slides (line, payment); dots/indicators
+  and swipe bounds updated accordingly.
+- The doughnut card sits directly above "Top categorías" on mobile with
+  a fixed square aspect (aspect-ratio 1/1, max-width capped, centered) —
+  it must render as a circle, never an ellipse, at any width.
+- Desktop adopts per-column flex wrappers with exactly one flexible
+  absorber per column: line chart in Column A (flex 1 1 auto,
+  min-height 200px card floor), doughnut in Column B (flex 1 1 auto,
+  min-height 180px card floor); all other cards natural height.
+  Bottom edges of the two columns align by construction.
+- Pendientes internal scroll carries over (Option A: overflow-y auto,
+  max-height 280px, never truncation) — applies at all widths.
+
+**Mechanical note (DOM order vs. column wrappers):** per-column flex
+wrappers require contiguous DOM per column, but the ratified mobile
+stacking (KPIs → doughnut → Top categorías → charts → table →
+Pendientes) interleaves the two columns' members. Resolution: two real
+wrapper divs (Column A: charts-section + Pendientes; Column B: doughnut
++ Top categorías + table) that are `display: contents` below 1200px,
+with `main` a flex column and explicit `order` values on the six
+content blocks reproducing the ratified mobile order exactly. At
+≥1200px the wrappers become the flex columns and explicit grid
+placement ignores `order` within the grid; within each column the same
+`order` values happen to produce the correct card sequence.
+
+**Fecha:** 2026-07-18.
