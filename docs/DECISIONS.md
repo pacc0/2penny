@@ -1363,3 +1363,37 @@ closure notes below, with the conflict called out explicitly rather
 than papered over.
 
 **Fecha:** 2026-07-18.
+
+#### Closure notes (Iteration 4.1 gates, 2026-07-18)
+
+Measured via Playwright against `vite dev` + the Stage-9 mock-upstream
+pattern (`127.0.0.1:8788` serving `t6-production-payload.json` with
+0/1/4 synthetic pending rows). `npm run check` (0 errors, 0 warnings)
+and `npm run build` both exit 0.
+
+**Gate (a) — row legibility: PASS.** All 6 data rows measure exactly
+24.00px in every state at both 1920x1080 and 1280x800 (floor engaged;
+44px cap never reached). Mobile 395x893 untouched: rows 28.5px natural,
+unchanged.
+
+**Gate (b) — bottom alignment <= 2px: FAIL in all three states — the
+conflict the addendum's ruling anticipated.** Table card holds at
+251.27px (its 246px floor + intrinsic content rounding); Pendientes
+stays natural height. Identical at both desktop viewports:
+
+| pending items | Pendientes height | table height | bottom delta |
+|---|---|---|---|
+| 0 | 110.27px | 251.27px | 141px |
+| 1 (production) | 85.27px | 251.27px | 166px |
+| 4 | 208.27px | 251.27px | 43px |
+
+Per the ruling, legibility is kept and the misalignment is accepted and
+recorded — the "line chart absorbs the surplus" mechanism is not
+mechanically available (see addendum body); alignment would return only
+if Pendientes' natural height reached ~251px (≈6 pending items).
+
+**Gate (c) — no scroll: PASS.** No page horizontal scroll and no nested
+scrollbars at either desktop viewport in any state; mobile's
+carousel-track horizontal scroller is pre-existing carousel behavior.
+
+**Fecha:** 2026-07-18.

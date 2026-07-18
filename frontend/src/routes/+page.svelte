@@ -896,7 +896,8 @@
 
 		/* THE elastic card in Column B: default align-items:stretch fills
 		   row 5's height, which Pendientes (Column A) also terminates —
-		   the alignment guarantee (ADR-0029). */
+		   the alignment guarantee, WHEN Pendientes' own natural height
+		   already reaches this card's floor (ADR-0029 Iteration 4.1). */
 		.table-section {
 			grid-column: 2;
 			grid-row: 5;
@@ -904,13 +905,15 @@
 			padding: var(--spacing-md) var(--spacing-lg);
 			display: flex;
 			flex-direction: column;
-			/* No min-height floor (ADR-0029): the card's own box imposes
-			   nothing on row 5 beyond Pendientes' natural height, so the
-			   2px alignment gate holds exactly regardless of content —
-			   verified 0px delta at 0, 3, and 6 mock pending items. Table
-			   rows compress accordingly when Pendientes is short (1px at
-			   0 items, 10px at 3, 31px at 6) — a considered trade-off,
-			   not an oversight; see ADR-0029 revision note. */
+			/* Legibility floor (ADR-0029 Iteration 4.1 addendum — supersedes
+			   Iteration 4's "no min-height floor"): computed, not guessed.
+			   Global line-height is 1.5 (base.css).
+			   card padding:    2 * spacing-md (16px)      = 32px
+			   h2 heading:      16px * 1.5 + spacing-sm(8) = 32px
+			   header row:      13px * 1.5 + 6px padding   = 26px
+			   6 data rows:     6 * 26px reference height  = 156px
+			   total                                       = 246px */
+			min-height: 246px;
 			/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
 			background: linear-gradient(var(--surface-raised), var(--surface));
 			border: 1px solid var(--hairline);
@@ -948,18 +951,14 @@
 			flex: none;
 		}
 
-		/* No min-height floor: the table's own box must impose nothing on
-		   row 5 beyond Pendientes' natural height (ADR-0029) — rows grow
-		   evenly up to the 44px cap; any leftover collects below the last
-		   row (default flex-start), matching the spec's "let inner
-		   top-alignment absorb the rest." Flex items default to
-		   min-height:auto (their own content's intrinsic minimum),
-		   overriding the flex-shrink this depends on — min-height:0
-		   defeats that trap so rows can compress below one text line if
-		   Pendientes' natural height is small. */
+		/* Legibility floor (ADR-0029 Iteration 4.1 addendum — supersedes
+		   Iteration 4's "no min-height floor"): data rows never compress
+		   below 24px, whatever Pendientes' natural height is; they still
+		   grow evenly up to the 44px cap (Iteration 4 rule), leftover
+		   collecting below the last row (default flex-start). */
 		.table-section tbody tr {
 			flex: 1 1 0;
-			min-height: 0;
+			min-height: 24px;
 			max-height: 44px;
 		}
 
