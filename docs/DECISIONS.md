@@ -739,3 +739,78 @@ output.
    registered as a known gap, not a blocker.
 
 **Fecha:** 2026-07-17.
+
+## ADR-0023 — @21 contract amendment 1.0 → 1.1 (Stage 9)
+
+Status: Ratified 2026-07-17. Amends the json-api contract served by
+deployment @21. Webhook @12 is untouchable throughout this stage.
+
+Context: two registered concessions block visible dashboard function:
+R3 (ADR-0019, Stage 6) — line chart consumes 12 monthly net_flow_series
+rows instead of the legacy daily cumulative series; and the Stage 7
+concession — empty-month Top-3 renders a dignified empty state because
+the contract carries no previous-month breakdown. ROADMAP mandates one
+amendment, one @21 redeploy, for both.
+
+D1 — Amendment is strictly additive. Two new top-level keys:
+  daily_net_flow: [{ date: 'YYYY-MM-DD', value }] — cumulative net
+  flow by calendar day, 1st of current month through today inclusive,
+  zero-transaction days present as flat segments, computed server-side,
+  Confirmed-only. Contractual guarantee carried over from monolith
+  v1.0: the last entry's date always equals the current America/Bogota
+  calendar date; the frontend derives "today" from it, never from the
+  browser clock.
+  previous_month: { month: 'YYYY-MM', expenses_by_category:
+  [{ category, amount }] } — previous closed calendar month,
+  Confirmed-only, sorted descending, same row shape as the existing
+  expenses_by_category. month is included so the Top-3 fallback can
+  label its data source.
+  contract_version bumps to '1.1' on all three response paths
+  (success, unauthorized, internal error — Api.js L11/L15/L51 pattern).
+  No existing key changes name, shape, or semantics.
+
+D2 — net_flow_series (monthly, 12 rows) REMAINS in contract 1.1
+despite losing its consumer. Rationale: removal would make the
+amendment breaking and couple backend/frontend deploy order for zero
+functional gain; ~12 rows of dead weight is an acceptable cost and a
+possible future annual-view input. Registered for closure review: if
+no consumer or concrete annual-view plan exists at stage close, its
+removal is recorded as a candidate for a future contract 2.0.
+
+Evidence note (added at Stage 9 opening, T0 baseline capture): the
+`docs/evidence/stage-9/baseline-payload.json` snapshot (2026-07-17
+22:36:12-05:00) shows `net_flow_series` carrying 11 of its 12 rows at
+flat zero — real transaction history only begins 2026-07. This
+strengthens the closure-review case for retiring the monthly series in
+a future contract 2.0 (no consumer AND no historical data behind it).
+Decision unchanged: it stays in 1.1 for additivity.
+
+D3 — Frontend does NOT gate on contract_version. Defensive reads of
+the new keys only (render degrades gracefully if absent). Rationale:
+single user, operator-coordinated deploys, guard + Canary already own
+system health; a hard version gate is coupling that taxes every future
+amendment.
+
+D4 — Doughnut slide dead space stays deferred (cosmetic, no stage
+owner). This stage is contract, not cosmetics.
+
+D5 — The pending `npm run check` gate in frontend-ci.yml (ADR-0017
+backlog) attaches to Stage 9 closure as a micro-task with its own
+mini-ruling; it is not a stage task.
+
+D6 — Redeploy precondition: before the in-place @21 redeploy, the
+diff between @21's currently pinned version and @HEAD must be
+enumerated file-by-file and ruled on. Known pre-existing divergence:
+GeminiGate.js relocation (Stage 8, ADR-0021 D2) rides along in this
+bump. Ruling recorded here: this is inert for the doGet path —
+GeminiGate belongs to the webhook flow and @12 stays pinned; the @21
+bump does NOT constitute ADR-0021 D2's "legitimate in-place bump of
+@12" and does not activate GeminiGate. Any OTHER unexpected file in
+that diff is a STOP condition.
+
+Errata note: the Stage 9 opening task spec asserted no version field
+existed in the payload ("expected: none"); evidence showed
+contract_version: '1.0' already present on all paths. Recorded as a
+governance-side assumption error; code was correct.
+
+**Fecha:** 2026-07-17.
