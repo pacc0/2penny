@@ -79,16 +79,8 @@
 		flex-shrink: 0;
 	}
 
-	/* >=1200px (T4/T5): this card spans two grid rows next to the stacked
-	   Top categorías + Pendientes column, which is usually taller than the
-	   fixed 320px canvas — flex:1 fills the stretched card height instead
-	   of leaving dead space at the bottom (same pattern NetFlowChart
-	   already uses). */
-	@media (min-width: 1200px) {
-		.chart-wrap {
-			flex: 1;
-			height: auto;
-			min-height: 320px;
-		}
-	}
+	/* Iteration 2's >=1200px override (flex:1 to fill a stretched card)
+	   is removed in Iteration 3 (ADR-0028): align-items:start means the
+	   card is never stretched now, so the base 320px fixed height above
+	   already applies unmodified at every width >=769px. */
 </style>

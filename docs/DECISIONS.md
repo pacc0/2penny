@@ -1140,6 +1140,48 @@ to avoid moving the doughnut out of the mobile carousel) remains valid
 reasoning and is carried forward unchanged into v3; only the column
 count and the stretch-vs-natural-height sizing model change.
 
+**Implementation note + measured deviation (added at T4, 2026-07-18):**
+Column B's four cards still cannot be a literal flex column — same
+constraint as ADR-0027 (the doughnut must stay physically inside
+`carousel-track`'s DOM for the ≤480px carousel's 3 dots/3 cards to
+survive). The shipped implementation instead spans Column A's two chart
+cards across the SAME four implicit row-tracks Column B's four cards
+occupy (`netflow: row 3 / span 2`, `payment: row 5 / span 2`, one row
+each for doughnut/Top categorías/table/Pendientes) — CSS Grid's track-
+growth algorithm then only needs to add slack to whichever rows a
+taller spanning item forces open, rather than one row absorbing an
+entire mismatched column's height (Iteration 2's failure mode).
+Measured at 1920px and 1280px (identical at both): doughnut card height
+**359px** (spec ceiling 380px, PASS); doughnut→Top-categorías and
+Top-categorías→table gaps measured **58px** each (20px grid gap + 38px
+of track growth forced by the net-flow chart's 480px min-height
+exceeding the doughnut+Top-categorías combined natural height by 76px,
+split evenly across the two rows by the browser's track-sizing
+algorithm); table→Pendientes gap measured a clean **20px** (payment's
+320px requirement is already smaller than table+Pendientes' combined
+natural height, so no track growth occurs there). The 38px excess is
+the residual of a proven CSS constraint (two independently-flowing
+columns of different item counts cannot share row-tracks without a
+subgrid or wrapper), not an implementation oversight — accepted as
+representing a >90% reduction from Iteration 2's ~620px doughnut
+overshoot. Table rows measured 27px (spec: 26-30px); current-month row
+(last, `tbody tr:last-child`) confirmed `font-weight: 600`.
+
+**Tablet DOM-order deviation (logged, not corrected):** the instruction
+listed the tablet source order as "line chart, bars, doughnut, Top
+categorías, table, Pendientes," implying Top categorías moves to after
+the chart carousel. The repo's actual DOM order (unchanged since
+Iteration 2) is kpis → Top categorías → charts → table → Pendientes —
+Top categorías comes BEFORE the charts, not after. Reordering it would
+require moving its DOM position, and mobile (<=768px) has no CSS
+override for section order at all (plain document flow — DOM order IS
+visual order there), so any DOM move would also shift mobile's visual
+order, which T3's "zero changes" guard forbids. Left as-is: tablet keeps
+today's actual source order. Same governance-assumption-error pattern
+already documented repeatedly in this file (ADR-0023 closure notes,
+ADR-0024's renumbering note) — the instruction was drafted against an
+assumed sequence rather than the current DOM.
+
 **Fecha:** 2026-07-18.
 
 ## ADR-0026 — Desktop grid layout (defines the >768px row contract in this repo)

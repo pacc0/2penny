@@ -765,28 +765,39 @@
 		}
 	}
 
-	/* >=1200px (ADR-0027, Iteration 2 T2): 3-column region replaces the
-	   former rows 2-4 (ADR-0026). Sections dissolve into direct grid
-	   children via display:contents (same technique already used for the
+	/* >=1200px (ADR-0028, Iteration 3 T2): 2-column region replaces the
+	   Iteration 2 three-column contract. Sections dissolve into direct
+	   grid children via display:contents (same technique used for the
 	   KPI/chart carousels at every width above 480px) so no markup below
 	   769px needs to change — only these rules gate on the breakpoint.
-	   Shared explicit grid rows (3/4): Column A (netflow row 3, payment
-	   row 4) and Column C's table both span rows 3-4, so their bottoms
-	   align exactly. Column B's doughnut also spans rows 3-4 (absorbing
-	   that combined height, centered internally) while Top categorías/
-	   Pendientes each get their own dedicated row (5/6) — natural content
-	   height by construction, no stretch, no dead space, zero wrapper
-	   elements. (ADR-0027: a literal flex-container wrapper for Column
-	   A/B was rejected — it would require moving the doughnut out of the
-	   ≤480px chart carousel's DOM subtree, dropping it from 3 slides to
-	   2.) */
+	   align-items:start is load-bearing: it stops Grid's default stretch
+	   from forcing Column B's cards to fill row height, which is what let
+	   the doughnut grow oversized in Iteration 2.
+
+	   Row scheme: 4 shared implicit rows (3-6). Column A's 2 charts each
+	   SPAN 2 of those rows (netflow: 3-4, payment: 5-6) instead of one
+	   row each — matching Column B's finer 4-row grain so Grid's track-
+	   growth algorithm only needs to add a little slack to rows 3/4
+	   (netflow's 480px min-height vs doughnut+top3's smaller combined
+	   natural height) rather than forcing one row to netflow's entire
+	   height, as Iteration 2's `row 3/span 2` on the doughnut alone did.
+	   Rows 5/6 (table+pending vs payment) need no growth at all — their
+	   combined natural height already exceeds payment's 320px, so payment
+	   just leaves blank space at Column A's own bottom (fine — "column
+	   bottoms do not need to align," ADR-0028). A literal flex wrapper
+	   for Column B was rejected again (ADR-0027/0028): it would require
+	   moving the doughnut out of the ≤480px chart carousel's DOM subtree,
+	   dropping it from 3 slides to 2. Measured residual gap between the
+	   doughnut and Top categorías is logged as a DEVIATION where it
+	   exceeds the ideal 20px. */
 	@media (min-width: 1200px) {
 		main {
 			max-width: 1520px;
 			padding: var(--spacing-xl) 48px;
 			display: grid;
-			grid-template-columns: minmax(0, 6fr) minmax(0, 3fr) minmax(0, 4fr);
+			grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 			gap: 20px;
+			align-items: start;
 		}
 
 		/* Grid owns spacing now; per-section margin would double up on gap. */
@@ -843,103 +854,60 @@
 
 		.chart-netflow {
 			grid-column: 1;
-			grid-row: 3;
+			grid-row: 3 / span 2;
 		}
 
 		.chart-payment {
 			grid-column: 1;
-			grid-row: 4;
+			grid-row: 5 / span 2;
 		}
 
-		/* Spans rows 3-4 (Column A's full height) and centers its fixed
-		   312px canvas within it — the ratified spec's "flex: 1, absorbs
-		   ALL leftover vertical space," via grid stretch instead of a flex
-		   wrapper (ADR-0027). The heading stays pinned at the card's top;
-		   only the chart-wrap (auto margins) centers in the remaining
-		   space, so "Gastos por categoría" doesn't drift to mid-card. */
+		/* Natural content height only (align-items:start, no span, no
+		   flex-grow) — the exact fix for Iteration 2's oversized card.
+		   Canvas wrapper drops to 280px fixed (component-level change). */
 		.chart-category {
 			grid-column: 2;
-			grid-row: 3 / span 2;
-			display: flex;
-			flex-direction: column;
-		}
-
-		.chart-category :global(.chart-wrap) {
-			margin: auto 0;
+			grid-row: 3;
 		}
 
 		.top3-section {
 			grid-column: 2;
-			grid-row: 5;
+			grid-row: 4;
 		}
 
-		.pending-section {
-			grid-column: 2;
-			grid-row: 6;
-		}
-
-		/* Full region height: spans the same two rows as Column A, so its
-		   bottom aligns with the payment-chart card's bottom (~24px
-		   tolerance, T4 gate). */
+		/* Compact ledger density replaces Iteration 2's fill-height
+		   distribution (that technique existed only to fill a stretched
+		   cell that no longer exists under align-items:start). */
 		.table-section {
-			grid-column: 3;
-			grid-row: 3 / span 2;
+			grid-column: 2;
+			grid-row: 5;
 			box-sizing: border-box;
 			padding: var(--spacing-md) var(--spacing-lg);
-			display: flex;
-			flex-direction: column;
 			/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
 			background: linear-gradient(var(--surface-raised), var(--surface));
 			border: 1px solid var(--hairline);
 			border-radius: var(--rounded-lg);
 		}
 
-		.table-section .table-scroll {
-			flex: 1;
-		}
-
-		/* Rows fill the card height evenly: thead/tbody dissolve so every
-		   <tr> becomes a flex row of <table> itself; the header row keeps
-		   its natural height, the 12 data rows share the rest equally so
-		   the last row ends near the card bottom. Column C is the
-		   narrowest column (4fr of 13) — smaller font/padding than the
-		   base rules (same technique already used at <=480px) keeps four
-		   currency columns readable without triggering table-scroll's
-		   overflow-x at 1200-1280px. */
 		.table-section table {
-			display: flex;
-			flex-direction: column;
-			height: 100%;
 			font-size: 0.8125rem;
 		}
 
 		.table-section th,
 		.table-section td {
-			padding: var(--spacing-xs);
+			padding: 3px var(--spacing-xs);
 		}
 
-		.table-section thead,
-		.table-section tbody {
-			display: contents;
+		/* Current month is always the last row (net_flow_series is
+		   chronological) — matches the spec's "current month row gets
+		   font-weight 600" without needing a data-driven class. */
+		.table-section tbody tr:last-child {
+			font-weight: 600;
 		}
 
-		.table-section tr {
-			display: flex;
-			flex: 1;
-		}
-
-		.table-section thead tr {
-			flex: none;
-		}
-
-		.table-section th,
-		.table-section td {
-			flex: 1;
-		}
-
-		.table-section th:first-child,
-		.table-section td:first-child {
-			flex: 0.7;
+		.pending-section {
+			grid-column: 2;
+			grid-row: 6;
 		}
 	}
 

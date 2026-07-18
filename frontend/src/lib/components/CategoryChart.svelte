@@ -115,4 +115,14 @@
 			height: 320px;
 		}
 	}
+
+	/* >=1200px (ADR-0028, Iteration 3): 312px→280px. The card is natural
+	   content height now (align-items:start, no row-span, no flex-grow) —
+	   a smaller fixed canvas keeps the card itself compact, matching the
+	   spec's "card height = title + wrapper + padding, nothing more." */
+	@media (min-width: 1200px) {
+		.chart-wrap {
+			height: 280px;
+		}
+	}
 </style>
