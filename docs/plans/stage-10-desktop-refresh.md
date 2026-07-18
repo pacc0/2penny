@@ -289,3 +289,70 @@ STOP CONDITION 1: any other mobile structural change required -> STOP.
    above (three-column structure, card order, table unification).
 
 Everything else: decide, proceed, log under DEVIATIONS.
+
+## Iteration 3 (layout amendment v3)
+
+Ratified verbatim as the governing instruction block for this amendment.
+See `docs/DECISIONS.md` ADR-0028 for the full rationale: Iteration 2's
+doughnut card grew oversized once its grid cell spanned Column A's full
+row-track height while its canvas stayed a fixed 312px.
+
+Amends Stage 10. Scope: `frontend/` + `docs/` ONLY. Backend, clasp,
+webhook: forbidden. Does NOT deploy — production deploy is always
+Camilo's manual wrangler step.
+
+### T2 — Desktop layout v3 (>=1200px only)
+
+Replace the 3-column region (6fr/3fr/4fr) with:
+`grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 20px; align-items: start;`
+(container 1520px / 48px padding / header / hero row: unchanged)
+
+**Column A (2fr)** — stack, gap 20px, exactly as today:
+1. Evolución del flujo neto (line chart card).
+2. Gastos por método de pago (bars card).
+
+Keep current explicit wrapper heights (the 3:2 proportion from
+Iteration 2 remains as fixed min-heights, 480px/320px);
+`maintainAspectRatio: false` and the dynamic 1-4 bar rules stay.
+
+**Column B (1fr)** — vertical stack, gap 20px, ALL cards natural content
+height, none stretched, in this exact order:
+1. Gastos por categoría (doughnut, no legend). No flex-grow / row-track
+   stretching. Canvas wrapper: fixed height 280px, doughnut centered.
+   Card height = title + wrapper + padding, nothing more.
+2. Top categorías — 3 columns side by side, unchanged content. Natural
+   height.
+3. Flujo neto — últimos 12 meses: single 12-row table, compact ledger
+   density: row height ~26-30px, font-size ~13px, tabular-nums,
+   right-aligned numerics, hairline row separators. Current month row
+   (last) gets font-weight 600. No fill-height distribution.
+4. Pendientes — natural height, last in the stack.
+
+Column bottoms do NOT need to align. No dead space inside any card.
+
+**Tablet (769-1199px):** unchanged — single column, source order: line
+chart, bars, doughnut, top categorías, table, pendientes.
+
+### T3 — Mobile guard (<=768px)
+
+Zero changes. Verify by DOM/structure check that mobile markup is
+unaffected (carousel: 3 dots / 3 cards).
+
+STOP CONDITION 1: any mobile structural impact -> STOP.
+
+### T4 — Gates & verification
+
+1. `npm run check` + `npm run build`: exit codes reported.
+2. Playwright measurements at 1920x1080 and 1280x800: doughnut card
+   height <= 380px; 20px gaps between Column B cards, no dead bands;
+   no horizontal scroll/nested scrollbars at 1920/1280/1024/395; table
+   rows within 26-30px height.
+3. Handoff commit + push origin/master. Do not deploy.
+
+### Stop conditions (the only two)
+
+1. Mobile structure would be affected (T3).
+2. An ambiguity whose resolution would change the contract above
+   (column count, card order, natural-height rule).
+
+Everything else: decide, proceed, log under DEVIATIONS.

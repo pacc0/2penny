@@ -1089,6 +1089,59 @@ condition 1.
 
 **Fecha:** 2026-07-18.
 
+## ADR-0028 — Desktop grid v3: two-column region (supersedes ADR-0027's three-column contract)
+
+**Status:** Ratified by Camilo, 2026-07-18. Stage 10, Iteration 3 (layout
+amendment).
+
+**Context:** ADR-0027's three-column region (6fr/3fr/4fr) had the
+doughnut chart's grid cell span the same two row-tracks as Column A
+(netflow+payment), so it would "absorb leftover space" and align with
+Column A/C's bottom edge. In practice this made the doughnut CARD
+grossly oversized — the card's box grew to match Column A's ~800px
+combined chart height while the doughnut's own canvas stayed a fixed
+312px, leaving a large empty band inside the card. This was visible the
+moment the table stopped sharing that row-track (see decision below) —
+with only Column A's charts left to size the row, the mismatch between
+"card height" and "canvas height" in Column B became obvious rather
+than being masked by three competing columns.
+
+**Decision:** replace the 3-column region with a 2-column region:
+`grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 20px; align-items: start`.
+`align-items: start` is the load-bearing change — it stops CSS Grid's
+default `stretch` from forcing Column B's cards to fill the row height
+at all, which is what let the doughnut's cell grow oversized in the
+first place.
+
+- **Column A (2fr):** net-flow line chart, then payment-method bars,
+  stacked — unchanged from Iteration 2 (480px/320px min-heights, exact
+  3:2 proportion retained as plain fixed values, no row-track sharing).
+- **Column B (1fr):** doughnut, Top categorías, the 12-month table, and
+  Pendientes, stacked, ALL natural content height, zero stretching.
+  The doughnut's canvas wrapper drops from 312px to 280px (fixed); its
+  card is exactly title + wrapper + padding. The table drops the
+  Iteration-2 flex-distributed-rows technique entirely (that technique
+  existed only to fill a stretched cell that no longer exists) — it
+  reverts to a compact ledger density (26-30px rows, ~13px font),
+  sized to its own 12 rows and nothing more. Because Column B no longer
+  shares row-tracks with Column A or a table column, the two columns'
+  bottoms are NOT expected to align — Column B simply ends where its
+  content ends, which may be shorter or taller than Column A.
+- **Tablet (769-1199px):** unchanged — single-column stack in source
+  order (line chart, bars, doughnut, Top categorías, table, Pendientes).
+- **Mobile (<=768px):** zero changes. The Iteration 2 header exception
+  stands; verified the ≤480px chart carousel is unaffected (3 dots/3
+  cards) since this amendment only touches the >=1200px media query.
+
+**Superseded:** ADR-0027's three-column contract (6fr/3fr/4fr,
+doughnut/table row-track sharing) — that ADR's mobile-DOM-preservation
+implementation note (shared grid row-tracks instead of flex wrappers,
+to avoid moving the doughnut out of the mobile carousel) remains valid
+reasoning and is carried forward unchanged into v3; only the column
+count and the stretch-vs-natural-height sizing model change.
+
+**Fecha:** 2026-07-18.
+
 ## ADR-0026 — Desktop grid layout (defines the >768px row contract in this repo)
 
 **Status:** Ratified by Camilo, 2026-07-18.
