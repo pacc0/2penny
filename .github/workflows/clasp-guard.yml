@@ -1,11 +1,40 @@
 name: clasp-guard
-# Stage 8 guardrail — INTENTIONALLY INERT until Stage 8 (see docs/ROADMAP.md).
-# Final version will verify webhook deployment-id integrity after backend
-# pushes, using the CLASPRC_JSON secret (never committed), and fail on drift.
+# Stage 8 guardrail — READ-ONLY verification only. Never deploys, never
+# publishes. See docs/DECISIONS.md ADR-0021 (D3) and docs/OPERATIONS.md.
 on:
+  push:
+    branches: [master]
+    paths: ["backend/**"]
   workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * 1" # weekly, Monday 13:00 UTC
+
+env:
+  # canonical — see ADR-0021; NEVER edit without an ADR
+  WEBHOOK_DEPLOYMENT_ID: AKfycbzqbEYJTZiiorI2wEPJ7romqGUxFURobfRUQ_4JDeMHOdkFWLNnIxDDeWDvCPMc4e5W
+  # canonical — see ADR-0021; NEVER edit without an ADR
+  JSON_API_DEPLOYMENT_ID: AKfycbx6H0I12mnUT830S7-FHplkRIcpbeg5mHz4qZxkegv_0RB7m8VHlXgSBtlsgz16rsIF
+
 jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "clasp-guard is a Stage 8 deliverable. Inert by design."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install -g @google/clasp
+      - name: Write clasp credentials
+        run: echo "${{ secrets.CLASPRC_JSON }}" > "$HOME/.clasprc.json"
+      - name: Verify deployment IDs
+        working-directory: backend
+        run: |
+          OUTPUT="$(clasp deployments)"
+          echo "$OUTPUT"
+          FAIL=0
+          echo "$OUTPUT" | grep -qF "$WEBHOOK_DEPLOYMENT_ID" || { echo "::error::Webhook (@12) deployment ID missing or altered — Telegram webhook may be broken. See ADR-0021 (D3)."; FAIL=1; }
+          echo "$OUTPUT" | grep -qF "$JSON_API_DEPLOYMENT_ID" || { echo "::error::json-api (@21) deployment ID missing or altered. See ADR-0021 (D3)."; FAIL=1; }
+          if [ "$FAIL" -eq 1 ]; then
+            exit 1
+          fi
+          echo "clasp-guard: both canonical deployment IDs verified."
