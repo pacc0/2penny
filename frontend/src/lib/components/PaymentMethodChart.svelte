@@ -72,11 +72,23 @@
 
 <style>
 	/* Legacy .chart-wrap--bar: fixed 320px, flex-shrink 0. The same 320px is
-	   the ratified ≤480px slide height (plan v2 table, R2), so no media
-	   override is needed. */
+	   the ratified ≤480px slide height (plan v2 table, R2). */
 	.chart-wrap {
 		position: relative;
 		height: 320px;
 		flex-shrink: 0;
+	}
+
+	/* >=1200px (T4/T5): this card spans two grid rows next to the stacked
+	   Top categorías + Pendientes column, which is usually taller than the
+	   fixed 320px canvas — flex:1 fills the stretched card height instead
+	   of leaving dead space at the bottom (same pattern NetFlowChart
+	   already uses). */
+	@media (min-width: 1200px) {
+		.chart-wrap {
+			flex: 1;
+			height: auto;
+			min-height: 320px;
+		}
 	}
 </style>
