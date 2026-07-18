@@ -8,11 +8,11 @@ function doGet(e) {
   try {
     var secret = PropertiesService.getScriptProperties().getProperty('API_SECRET');
     if (!secret || !e || !e.parameter || e.parameter.key !== secret) {
-      return jsonResponse_({ contract_version: '1.0', error: 'unauthorized' });
+      return jsonResponse_({ contract_version: '1.1', error: 'unauthorized' });
     }
     return jsonResponse_(buildDashboardPayload_());
   } catch (err) {
-    return jsonResponse_({ contract_version: '1.0', error: 'internal' });
+    return jsonResponse_({ contract_version: '1.1', error: 'internal' });
     // Never leak err details to the response; log instead:
     // console.error(err);
   }
@@ -24,7 +24,7 @@ function jsonResponse_(obj) {
 }
 
 /**
- * Assembles the contract v1.0 envelope. Reuses Dashboard.js's aggregators
+ * Assembles the contract v1.1 envelope. Reuses Dashboard.js's aggregators
  * (aggregateMonth_, aggregateSavings_, aggregateExpensesByCategory_,
  * aggregateExpensesByAccount_, loadAllTransactions_,
  * loadTransferPurposeSavingsMap_, loadSettingsMap_) — same Reporting Rules,
@@ -48,7 +48,7 @@ function buildDashboardPayload_() {
   var savingsRaw = aggregateSavings_(transactions, purposeMap, monthStart, todayIso, yearStart, goalMonthly);
 
   return {
-    contract_version: '1.0',
+    contract_version: '1.1',
     generated_at: Utilities.formatDate(new Date(), 'America/Bogota', "yyyy-MM-dd'T'HH:mm:ssXXX"),
     period: {
       month: monthKey,
@@ -71,6 +71,8 @@ function buildDashboardPayload_() {
     expenses_by_account: aggregateExpensesByAccount_(transactions, monthStart, todayIso)
       .map(function (row) { return { account: row.account, amount: row.total }; }),
     net_flow_series: buildNetFlowSeries_(transactions, todayIso),
+    daily_net_flow: buildDailyNetFlowSeries_(transactions, monthStart, todayIso),
+    previous_month: buildPreviousMonthPayload_(transactions, todayIso),
     pending: buildPendingPayload_(transactions),
     error: null
   };
@@ -113,6 +115,63 @@ function buildNetFlowSeries_(transactions, todayIso) {
     var t = totals[m];
     return { month: m, income: t.income, expenses: t.expenses, net_flow: t.income - t.expenses };
   });
+}
+
+// Contract 1.1 (ADR-0023 D1). Resurrected from Dashboard.js's
+// aggregateCumulativeNetFlow_, deleted in Stage 7 (f9aff63) when the legacy
+// v1.0 dashboard was retired — recovered verbatim from f9aff63^ (see ADR-0023
+// D6-R1 bonus finding) and adapted to Api.js's monthStart/todayIso params.
+// Same semantics: cumulative net flow by calendar day, 1st of the current
+// month through today inclusive, zero-activity days carried forward flat,
+// Confirmed-only.
+function buildDailyNetFlowSeries_(transactions, monthStart, todayIso) {
+  var netByDate = {};
+  for (var i = 1; i < transactions.length; i++) {
+    var row = transactions[i];
+    if (row[COL_STATUS] !== 'Confirmed') continue;
+    var date = row[COL_TRANSACTION_DATE];
+    if (date < monthStart || date > todayIso) continue;
+    if (row[COL_TRANSACTION_TYPE] === 'Income') {
+      netByDate[date] = (netByDate[date] || 0) + row[COL_AMOUNT];
+    } else if (row[COL_TRANSACTION_TYPE] === 'Expense') {
+      netByDate[date] = (netByDate[date] || 0) - row[COL_AMOUNT];
+    }
+  }
+
+  var year = Number(monthStart.substring(0, 4));
+  var month = Number(monthStart.substring(5, 7));
+  var lastDay = Number(todayIso.substring(8, 10));
+  var series = [];
+  var running = 0;
+  for (var day = 1; day <= lastDay; day++) {
+    var isoDay = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    running += netByDate[isoDay] || 0;
+    series.push({ date: isoDay, value: running });
+  }
+  return series;
+}
+
+// Contract 1.1 (ADR-0023 D1). Previous closed calendar month's expenses by
+// category — unblocks the Top-3 empty-month fallback (Stage 7 concession).
+// Reuses aggregateExpensesByCategory_ as-is over a shifted window; an empty
+// month naturally yields [] (never null, never absent) since totals starts
+// as {} — no special-casing needed (A3).
+function buildPreviousMonthPayload_(transactions, todayIso) {
+  var currentYear = Number(todayIso.substring(0, 4));
+  var currentMonth = Number(todayIso.substring(5, 7));
+  var prevDate = new Date(currentYear, currentMonth - 2, 1);
+  var prevYear = prevDate.getFullYear();
+  var prevMonthNum = prevDate.getMonth() + 1;
+  var prevMonthKey = prevYear + '-' + String(prevMonthNum).padStart(2, '0');
+  var prevMonthStart = prevMonthKey + '-01';
+  var prevMonthEndDay = new Date(prevYear, prevMonthNum, 0).getDate();
+  var prevMonthEnd = prevMonthKey + '-' + String(prevMonthEndDay).padStart(2, '0');
+
+  return {
+    month: prevMonthKey,
+    expenses_by_category: aggregateExpensesByCategory_(transactions, prevMonthStart, prevMonthEnd)
+      .map(function (row) { return { category: row.category, amount: row.total }; })
+  };
 }
 
 function buildPendingPayload_(transactions) {

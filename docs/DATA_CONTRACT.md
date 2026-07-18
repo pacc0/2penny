@@ -45,15 +45,18 @@ valores válidos.
    puede tener `category`. Income/Expense requieren `category`, no pueden
    tener `transfer_purpose`.
 
-## §3 Contrato del endpoint JSON (Etapa 2 — RATIFICADO)
+## §3 Contrato del endpoint JSON (Etapa 2 — RATIFICADO; Etapa 9 — amendment 1.1)
 
-**Versión de contrato: 1.0.** Cambios breaking → ADR + bump de versión.
+**Versión de contrato: 1.1.** Cambios breaking → ADR + bump de versión.
+Amendment 1.0 → 1.1 (ADR-0023, Etapa 9): estrictamente aditivo — agrega
+`daily_net_flow` y `previous_month`; ninguna key existente cambia de
+nombre, forma o semántica.
 
 ### Envelope JSON (forma verbatim, tal como ratificada)
 
 ```json
 {
-  "contract_version": "1.0",
+  "contract_version": "1.1",
   "generated_at": "2026-07-09T14:32:00-05:00",
   "period": {
     "month": "2026-07",
@@ -80,6 +83,15 @@ valores válidos.
   "net_flow_series": [
     { "month": "2026-01", "income": 0, "expenses": 0, "net_flow": 0 }
   ],
+  "daily_net_flow": [
+    { "date": "2026-07-01", "value": 0 }
+  ],
+  "previous_month": {
+    "month": "2026-06",
+    "expenses_by_category": [
+      { "category": "...", "amount": 0 }
+    ]
+  },
   "pending": [
     {
       "id": "...",
@@ -96,8 +108,14 @@ valores válidos.
 
 `generated_at` es ISO-8601 con offset `-05:00` (America/Bogota). `net_flow_series`
 trae exactamente 12 filas (mes actual + 11 anteriores), una por mes, incluso en
-cero. `error` es `null` en el caso feliz; en error, el resto del envelope se omite
-(ver amendment de auth abajo).
+cero. `daily_net_flow` trae una fila por día calendario desde el 1° del mes
+actual hasta hoy inclusive (días sin actividad quedan planos, valor
+acumulado); la fecha de la última fila siempre es la fecha calendario actual
+en America/Bogota — el frontend deriva "hoy" de ahí, nunca del reloj del
+navegador. `previous_month.expenses_by_category` es `[]` (nunca `null`, nunca
+ausente) cuando el mes anterior no tuvo gastos Confirmed. `error` es `null` en
+el caso feliz; en error, el resto del envelope se omite (ver amendment de auth
+abajo).
 
 ### Reglas de construcción (trazadas a §2)
 
@@ -111,6 +129,12 @@ cero. `error` es `null` en el caso feliz; en error, el resto del envelope se omi
 - La serie de 12 meses (`net_flow_series`) se calcula server-side; la ventana
   es una constante fija de 12, no un `Setting` (principio 5 — no
   configurabilidad especulativa).
+- `daily_net_flow` reusa la misma regla de Confirmed-only y `amount` con signo
+  por reporte (reglas 2, 3, 5); ventana fija (1° del mes actual → hoy), no un
+  `Setting`.
+- `previous_month` reusa `aggregateExpensesByCategory_` tal cual sobre la
+  ventana del mes calendario anterior — mismo agregador, mismas reglas, otra
+  ventana de fechas.
 
 ### AUTH — enmienda ratificada (dos capas)
 
@@ -119,7 +143,7 @@ responde 200). El contrato de auth se resuelve en dos capas:
 
 - **Capa 1 (`doGet`, este endpoint):** valida `e.parameter.key` contra el
   Script Property `API_SECRET`. Sin match → responde
-  `{"contract_version":"1.0","error":"unauthorized"}` con HTTP 200 (limitación
+  `{"contract_version":"1.1","error":"unauthorized"}` con HTTP 200 (limitación
   dura de Apps Script).
 - **Capa 2 (Etapa 4, server route de SvelteKit `+server.js`):** traduce
   `error != null` del body al status HTTP real (401/500) antes de que llegue
