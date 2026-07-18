@@ -197,3 +197,95 @@ push output, deployment URL.
    yourself and log them under DEVIATIONS).
 
 Everything else: decide, proceed, log.
+
+## Iteration 2 (layout amendment)
+
+Ratified verbatim as the governing instruction block for this amendment.
+See `docs/DECISIONS.md` ADR-0027 for the renumbering note (originating
+text referred to "ADR-0023"/"ADR-0022"; both already taken) and for the
+implementation decision on Column A/B (explicit min-height ratio instead
+of nested flex wrappers, to avoid touching the mobile chart carousel's
+DOM).
+
+Amends the ratified Stage 10 plan. Scope: `frontend/` + `docs/` ONLY.
+Backend, clasp, webhook: forbidden.
+
+### T1 — Governance
+
+Append ADR-0027 "Desktop grid v2 + mobile header exception (supersedes
+the ADR-0026 row contract)":
+- Rows 2-4 of the desktop grid are replaced by a single 3-column region
+  (spec below). The 12-month table moves from a bottom full-width split
+  card to a full-height right column as a single 12-row table; the
+  two-group 6+6 split is retired.
+- Mobile exception: the <=768px header adopts the desktop header
+  pattern (large title + right-aligned date, same baseline). This is
+  the ONLY sanctioned mobile structural change; the mobile-integrity
+  rule remains in force for everything else.
+
+### T2 — Desktop layout v2 (>=1200px only)
+
+Replace the former rows 2, 3 and 4 with ONE grid region:
+`grid-template-columns: minmax(0,6fr) minmax(0,3fr) minmax(0,4fr); gap: 20px;`
+(container max-width 1520px and 48px padding unchanged; header and the 4
+hero cards row unchanged).
+
+**Column A (6fr)** — flex column, gap 20px:
+- Card: Evolución del flujo neto (line chart), flex: 3.
+- Card: Gastos por método de pago (bars), flex: 2.
+- Both keep explicit chart-wrapper heights via flex sizing;
+  `maintainAspectRatio: false` stays; dynamic 1-4 bar sizing rules from
+  the ratified plan stay.
+
+**Column B (3fr)** — flex column, gap 20px:
+- Card: Gastos por categoría (doughnut, no legend), flex: 1 — this card
+  absorbs ALL leftover vertical space; doughnut stays centered within it
+  (its canvas wrapper keeps a fixed height, 312px, centered vertically).
+- Card: Top categorías — natural content height. Keep the 3-across
+  columns.
+- Card: Pendientes — natural content height, directly below, no
+  stretching, no dead space above or below it.
+
+**Column C (4fr):**
+- Card: "Flujo neto — últimos 12 meses" as ONE single table, 12 rows,
+  full region height (grid stretch). Remove the 6+6 split and its
+  vertical hairline entirely.
+- Distribute rows to fill the card height evenly so the last row ends
+  near the card bottom — no large empty band below the table.
+- Columns Mes / Ingresos / Gastos / Neto, tabular-nums, right-aligned
+  numerics, unchanged data.
+
+**TABLET (769-1199px):** unchanged from the ratified plan — everything
+stacks full-width in source order; the table renders as the same single
+12-row table (no split logic remains anywhere).
+
+### T3 — Mobile header (<=768px)
+
+The ONLY mobile change (per ADR-0027 exception):
+- Header becomes flex, space-between, baseline-aligned: "2penny" left at
+  32px bold (Space Grotesk), period "2026-07" right, muted, on the same
+  line.
+- Verify no wrap at 395px viewport width.
+
+Everything else at <=768px stays byte-identical in structure.
+
+STOP CONDITION 1: any other mobile structural change required -> STOP.
+
+### T4 — Gates & verification
+
+1. `npm run check` + `npm run build` + tests: all pass, exit codes
+   reported.
+2. Screenshots: 1920x1080, 1280x800, 1024x768, 395x893. Verify at
+   1920x1080: (a) column C table bottom aligns with column A bars-card
+   bottom within ~24px; (b) no empty band around Pendientes; (c) no
+   horizontal scroll at any width.
+3. Handoff commit, push master, report deployment URL and final
+   `git log --oneline` for the iteration.
+
+### Stop conditions (the only two)
+
+1. Mobile structure beyond the T3 header exception would be affected.
+2. Resolving an ambiguity would materially change the visual contract
+   above (three-column structure, card order, table unification).
+
+Everything else: decide, proceed, log under DEVIATIONS.

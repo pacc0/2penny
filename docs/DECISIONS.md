@@ -1007,6 +1007,88 @@ DESIGN.md §4 stand unchanged for everything else; glassmorphism/
 
 **Fecha:** 2026-07-18.
 
+## ADR-0027 — Desktop grid v2 + mobile header exception (supersedes ADR-0026's row contract)
+
+**Status:** Ratified by Camilo, 2026-07-18. Stage 10, Iteration 2 (layout
+amendment).
+
+**Renumbering note (same pattern as ADR-0024's, see that entry):** the
+originating instruction block called this "ADR-0023," referring to the
+prior row-contract ADR as "ADR-0022." Both numbers are already taken in
+this file (ADR-0023 = Stage 9 contract amendment, ADR-0022 = Stage 8
+closure). The row contract this ADR actually supersedes is **ADR-0026**
+(Desktop grid layout, ratified earlier the same day). Renumbered here to
+ADR-0027, the next free sequence after ADR-0026. Governance-side
+numbering error, not a deliberate revision — logged per the ADR-0023/
+ADR-0024 precedent.
+
+**Decision, part 1 — desktop grid v2 (>=1200px only):** ADR-0026's Rows
+2-4 (net-flow/category row, payment/top3/pending row, full-width split
+table row) are replaced by ONE 3-column region:
+`grid-template-columns: minmax(0,6fr) minmax(0,3fr) minmax(0,4fr); gap: 20px`.
+Container max-width (1520px), side padding (48px), header row, and the
+4-hero-card row are unchanged from ADR-0026.
+
+- **Column A (6fr):** Evolución del flujo neto (line) above Gastos por
+  método de pago (bars), stacked, 20px gap. Netflow gets the larger
+  share (spec: flex 3), payment the smaller (flex 2) — implemented via
+  explicit `min-height` on each chart's wrapper (480px / 320px, an exact
+  3:2 ratio) rather than a literal flex-container ratio, since forcing
+  a true nested flex column here would require relocating the doughnut
+  chart out of the mobile carousel's DOM subtree (see implementation
+  note below). Both charts keep `maintainAspectRatio: false` and the
+  existing dynamic bar-count sizing rules.
+- **Column B (3fr):** Gastos por categoría (doughnut, no legend) on top,
+  Top categorías below, Pendientes below that. The doughnut's grid cell
+  spans the same two row-tracks as Column A's combined height, so it
+  visually "absorbs leftover space" the same way Column C's table does;
+  its canvas wrapper keeps a fixed 312px height, centered vertically
+  within the taller cell via internal flex centering. Top categorías and
+  Pendientes each get their own dedicated auto-sized grid row (shared
+  with no other column), so their box height is exactly their natural
+  content height — no stretch, no dead space, by construction rather
+  than by override.
+- **Column C (4fr):** "Flujo neto — últimos 12 meses" as ONE 12-row
+  table, full region height (spans the same two row-tracks as Column
+  A/B). The 6+6 split and its vertical hairline are removed entirely —
+  `.table-desktop-split`/`.table-half` deleted. Rows fill the card
+  height evenly via a flex-distributed `<tbody>` (`thead`/`tbody`
+  `display: contents`, each `<tr>` a flex row; header row `flex: none`,
+  the 12 data rows `flex: 1` each) so the last row ends near the card
+  bottom.
+- **Tablet (769-1199px):** unchanged from ADR-0026 — full-width stack in
+  source order, single 12-row table (no split logic exists anywhere in
+  the codebase after this amendment, at any breakpoint).
+
+**Implementation note (mobile-DOM-preservation constraint, decided here,
+not a STOP trigger):** achieving Column A/B as literal nested flex
+containers was evaluated and rejected. The doughnut chart is one of
+three slides in the ≤480px chart carousel (`carousel-track`, scroll-snap,
+3 dots); Top categorías and Pendientes are separate top-level sections
+elsewhere in DOM order. Grouping doughnut+Top-categorías+Pendientes
+under one physical wrapper div would either (a) require moving the
+doughnut out of `carousel-track`, dropping the mobile carousel from 3
+slides to 2 — a real mobile behavioral regression, or (b) require
+relocating Top categorías/Pendientes in the DOM, which — even neutralized
+visually via flex `order` — was judged an unnecessary risk for a purely
+cosmetic desktop refinement. The shipped implementation reuses the
+technique ADR-0026 already established (shared explicit grid row-tracks,
+each column occupying only the rows it needs, zero DOM reordering) rather
+than introducing wrapper elements. Zero DOM nodes moved; zero mobile
+markup touched beyond the Task T3 header exception below.
+
+**Decision, part 2 — mobile header exception (<=768px), the ONE
+sanctioned mobile structural change:** the header adopts the desktop
+header pattern — flex, space-between, baseline-aligned: "2penny" left at
+32px bold (Space Grotesk), the period (e.g. "2026-07") right, muted, on
+the same line. The "generado &lt;timestamp&gt;" line was already deleted
+at all viewports (ADR-0026). Verified no wrap at 395px viewport width.
+The mobile-integrity rule remains in force for everything else — this is
+the only exception, per the originating instruction's explicit STOP
+condition 1.
+
+**Fecha:** 2026-07-18.
+
 ## ADR-0026 — Desktop grid layout (defines the >768px row contract in this repo)
 
 **Status:** Ratified by Camilo, 2026-07-18.
