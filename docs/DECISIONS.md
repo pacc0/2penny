@@ -924,3 +924,117 @@ commit `033996b`).
 **Fecha:** 2026-07-18.
 
 **Fecha:** 2026-07-17.
+
+## ADR-0024 — Typography refresh (supersedes the DESIGN.md typography paragraph rationale following §2, and the legacy-repo ADR-0003 Nunito/Averia tabular-digits argument)
+
+**Status:** Ratified by Camilo, 2026-07-18. **Conditional on the Stage 10
+T2 typography spike passing** (Space Grotesk must produce true
+`tabular-nums` alignment on real currency figures — see Stage 10 plan,
+`docs/plans/stage-10-desktop-refresh.md`, T2). If the spike fails, this
+ADR is superseded by a follow-up addendum, not edited (ADRs are
+immutable in this repo — precedent: ADR-0023 D6-R1, closure notes).
+
+**Decision:** `--font-text` becomes IBM Plex Sans Condensed.
+`--font-numeric` becomes Space Grotesk (covers both numeric/tabular
+figures and display type, e.g. the app wordmark — no separate
+`--font-display` token introduced; reusing `--font-numeric` for the one
+existing display use avoids an unrequested new token, per Principle 3).
+
+**Renumbering note:** the originating instruction block referred to
+this as "ADR-0020," reusing "ADR-0021" and "ADR-0022" for the token and
+layout ADRs below. Those three numbers are already taken in this file
+(ADR-0020 = Stage 7 closure, ADR-0021 = Stage 8 hardening rulings,
+ADR-0022 = Stage 8 closure — all above, dated 2026-07-13/07-17). This
+is a governance-side numbering error (spec drafted without reading the
+current end of this file), not a deliberate revision — renumbered here
+to ADR-0024/0025/0026, the next free sequence after ADR-0023. Logged
+per the established pattern (ADR-0023 closure notes, errors #1-#5).
+
+**Supersession-target correction:** the instruction named "DESIGN.md
+§3" as the section carrying the superseded typography rationale.
+§3 in this repo's DESIGN.md is "Responsive" (breakpoints), not
+typography — typography lives in an untitled paragraph immediately
+after the §2 tokens block. Corrected to the right target; no numbered
+§3 typography section exists to mark superseded.
+
+**ADR-0003 clarification (same pattern as ADR-0016's traceability
+note):** *this* repo's own ADR-0003 ("clasp con cuenta personal") is
+untouched by this ADR — it concerns Apps Script account ownership, not
+fonts. The "Nunito tabular-digits argument" being superseded belongs to
+the **legacy repo `pacc0/penny`'s** ADR-0003 (font delivery/tabular
+digits spike), referenced here only as prior rationale that this
+2penny-local typography choice now overrides; the legacy repo's own
+DECISIONS.md is not edited (ADR-0004/ADR-0020 legacy-repo boundary).
+
+**Anti-slop directive check (corrected framing):** `.claude/skills/
+design-tokens` does not name "Space Grotesk" specifically as a veto —
+it prohibits Inter/Roboto/Arial/system-font as *display* type and
+generic AI-default palettes, with no per-font geometric-sans
+enumeration. The instruction's framing ("vetoes it as an AI-convergent
+default") overstates what the skill text actually says. Recorded
+factually: this is Camilo's deliberate executive typography choice,
+adopted as a single named exception to the skill's general spirit
+(avoid AI-convergent defaults) even though the skill's literal text
+does not name this font. The skill's other prohibitions (no decorative
+gradients, no emoji-as-icons, no shadcn look, etc.) remain in full
+force, untouched by this ADR.
+
+**Fecha:** 2026-07-18.
+
+## ADR-0025 — Night Ledger token additions (Stage 10)
+
+**Status:** Ratified by Camilo, 2026-07-18.
+
+**Decision:** three new color tokens added to the Night Ledger palette:
+- `--savings-teal-tint: #85DBE6` — hero-card surface only (Ahorro KPI),
+  per the Two-Volume Rule (DESIGN.md §5 KPI cards: hero cards use
+  pastel-tint surfaces with `--ink-on-tint` text).
+- `--delta-positive-on-tint: #0E7A3A` — text-on-pastel only (KPI delta
+  figures on tinted hero surfaces).
+- `--delta-negative-on-tint: #C2410C` — text-on-pastel only, same scope.
+
+**Amendment to DESIGN.md §4 anti-slop (radial luminance overlay):** a
+radial gradient,
+`radial-gradient(120% 120% at 100% 100%, rgba(0,0,0,0.18), transparent 55%)`,
+is permitted ONLY as a `background-image` layered on tinted hero-card
+surfaces (Ingresos/Gastos/Ahorro). This is a luminance overlay on an
+existing surface token (darkens toward one corner of an already-tinted
+surface), the same category of exception ADR-0015 already carved out
+for linear luminance gradients — not a new decorative-gradient
+allowance. The decorative-gradient and hue-gradient prohibitions in
+DESIGN.md §4 stand unchanged for everything else; glassmorphism/
+`backdrop-filter` remains a hard FAIL with zero exceptions (ADR-0015).
+
+**Fecha:** 2026-07-18.
+
+## ADR-0026 — Desktop grid layout (defines the >768px row contract in this repo)
+
+**Status:** Ratified by Camilo, 2026-07-18.
+
+**Context correction:** the instruction described this ADR as updating
+"DASHBOARD.md row contract for >768px." No `DASHBOARD.md` exists
+anywhere in this repo (`docs/` or otherwise) — it is a legacy-repo
+(`pacc0/penny`) content-contract doc, referenced elsewhere in this
+repo's own DESIGN.md/ROADMAP.md only by external section number
+(e.g. "DASHBOARD.md §Row 2", "DASHBOARD.md v2.2") as citation of prior
+content authority, never ported or recreated locally. There is
+therefore no local file to "update." This ADR instead serves as the
+row-contract record for 2penny's own desktop (≥769px) layout,
+living here and in `docs/plans/stage-10-desktop-refresh.md`; the
+mobile (≤768px) structure is unchanged and remains governed by
+DESIGN.md §3.
+
+**Decision:** desktop (≥769px) layout is a 5-row grid: Row 0
+header (wordmark + period, no timestamp line), Row 1 four hero KPI
+cards (Ingresos/Gastos/Ahorro/Flujo Neto), Row 2 net-flow line (2/3) +
+category doughnut (1/3, no legend), Row 3 payment-method bars (2/3) +
+stacked Top-3-categorías/Pendientes column (1/3), Row 4 one full-width
+12-month table split into two 6-month groups side by side. Tablet
+(769–1199px) collapses hero cards to 2×2 and stacks rows 2–4 full-width
+in source order with a single 12-row table. Full row-by-row spec: see
+the Stage 10 plan doc (`docs/plans/stage-10-desktop-refresh.md`, T4).
+The "Gastos por cuenta" text-list section is deleted at all viewports
+(superseded by the payment-methods bar chart, which already carries
+the same per-account data).
+
+**Fecha:** 2026-07-18.

@@ -42,8 +42,11 @@ Bloque `:root` copiado verbatim de
   --pending-grey-bg: #2A2A30;
   --chart-extra-1: #8B8BF5;
   --chart-extra-2: #E36FB1;
-  --font-text: 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
-  --font-numeric: 'Averia Sans Libre', 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --savings-teal-tint: #85DBE6;
+  --delta-positive-on-tint: #0E7A3A;
+  --delta-negative-on-tint: #C2410C;
+  --font-text: 'IBM Plex Sans Condensed', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-numeric: 'Space Grotesk', 'IBM Plex Sans Condensed', system-ui, -apple-system, Roboto, Arial, sans-serif;
   --rounded-sm: 6px;
   --rounded-md: 10px;
   --rounded-lg: 14px;
@@ -56,12 +59,27 @@ Bloque `:root` copiado verbatim de
 }
 ```
 
-**Tipografía (verbatim, frontmatter de `docs/DESIGN.md` v1.3 legacy):**
-`font-text` = Nunito Variable (rounded geometric sans, todo texto/labels/UI);
-`font-numeric` = Averia Sans Libre (numerales; pesos 300/400/700 solo,
-hero-KPI en 700). Columnas numéricas y tabla usan Nunito con
-`font-variant-numeric: tabular-nums` (Averia es proporcional, no uniforme —
-solo vale para el valor único de una hero/KPI card).
+**Tipografía — SUPERSEDED by ADR-0024 (Stage 10, 2026-07-18).** La
+elección "Two Families" original (Nunito Variable + Averia Sans Libre,
+heredada de `docs/DESIGN.md` v1.3 legacy) queda reemplazada. Texto
+original conservado abajo por trazabilidad histórica; no vigente.
+
+> ~~Tipografía (verbatim, frontmatter de `docs/DESIGN.md` v1.3 legacy):
+> `font-text` = Nunito Variable (rounded geometric sans, todo
+> texto/labels/UI); `font-numeric` = Averia Sans Libre (numerales; pesos
+> 300/400/700 solo, hero-KPI en 700). Columnas numéricas y tabla usan
+> Nunito con `font-variant-numeric: tabular-nums` (Averia es
+> proporcional, no uniforme — solo vale para el valor único de una
+> hero/KPI card).~~
+
+**Tipografía vigente (ADR-0024):** `--font-text` = IBM Plex Sans
+Condensed (todo texto/labels/UI). `--font-numeric` = Space Grotesk
+(numerales tabulares Y el único uso de tipografía display, el wordmark
+"2penny" — no existe token `--font-display` separado; se reutiliza
+`--font-numeric`, Principio 3). Columnas numéricas y ledger usan
+`font-variant-numeric: tabular-nums`; validado por el spike de la Etapa
+10 T2 (gate obligatorio antes de aplicar visualmente — ver
+`docs/plans/stage-10-desktop-refresh.md`).
 
 **Paleta de 14 categorías (verbatim, `docs/DESIGN.md` §2 legacy):**
 - Obligación Mamá 👩 — `#F472B6`
@@ -118,6 +136,14 @@ horizontal.
   matiz (hue) siguen siendo FAIL duro; los decorativos de cualquier color
   saturado, también. Glassmorphism / `backdrop-filter`: FAIL duro SIN
   excepciones, incluidos sticky headers (ADR-0015).
+- **Segunda excepción de gradiente — overlay radial de luminancia
+  (ADR-0025, Etapa 10):** `radial-gradient(120% 120% at 100% 100%,
+  rgba(0,0,0,0.18), transparent 55%)` permitido ÚNICAMENTE como
+  `background-image` sobre superficies de hero-card ya tintadas
+  (Ingresos/Gastos/Ahorro). Es un overlay de luminancia sobre un token
+  de superficie existente, misma categoría que la excepción lineal de
+  ADR-0015 — no una nueva licencia decorativa. Las prohibiciones de
+  gradiente de matiz/decorativo siguen FAIL duro para todo lo demás.
 - **Mandatos:** cifras con `tabular-nums`; columnas numéricas/ledger usan
   `var(--font-text)` (Nunito) + `font-variant-numeric: tabular-nums` — sin
   monospace; `var(--font-numeric)` (Averia, proporcional — spike del
