@@ -72,74 +72,81 @@
 			</div>
 		</section>
 
-		<section class="top3-section">
-			<h2>Top categorías</h2>
-			<div class="top3">
-				{#each Array(3) as _, i (i)}
-					<div class="top3-cell">
-						<span class="label"><span class="ghost ghost-label">&nbsp;</span></span>
-						<span class="top3-pct"><span class="ghost ghost-delta">&nbsp;</span></span>
-						<div class="top3-track"></div>
+		<!-- Column wrappers (ADR-0030): DOM groups by desktop column;
+		     display:contents + order reproduce the mobile stacking. -->
+		<div class="dash-col dash-col-a">
+			<!-- Chart carousel skeleton mirrors the real chart cards (zero CLS):
+			     2 slides since ADR-0030 (doughnut extracted to Column B). -->
+			<section class="charts-section">
+				<div class="carousel-wrap">
+					<div class="carousel-track">
+						<div class="chart-card chart-netflow">
+							<h2>Evolución del flujo neto</h2>
+							<span class="ghost ghost-chart">&nbsp;</span>
+						</div>
+						<div class="chart-card chart-payment">
+							<h2>Gastos por método de pago</h2>
+							<span class="ghost ghost-chart-bar">&nbsp;</span>
+						</div>
 					</div>
-				{/each}
-			</div>
-		</section>
-
-		<!-- Chart carousel skeleton mirrors the real chart cards (zero CLS):
-		     same cards, ghosts at each chart wrap's fixed height. -->
-		<section class="charts-section">
-			<div class="carousel-wrap">
-				<div class="carousel-track">
-					<div class="chart-card chart-netflow">
-						<h2>Evolución del flujo neto</h2>
-						<span class="ghost ghost-chart">&nbsp;</span>
-					</div>
-					<div class="chart-card chart-payment">
-						<h2>Gastos por método de pago</h2>
-						<span class="ghost ghost-chart-bar">&nbsp;</span>
-					</div>
-					<div class="chart-card chart-category">
-						<h2>Gastos por categoría</h2>
-						<span class="ghost ghost-chart-doughnut">&nbsp;</span>
+					<div class="carousel-dots" aria-hidden="true">
+						{#each Array(2) as _, i (i)}
+							<span class="dot" class:active={i === 0}></span>
+						{/each}
 					</div>
 				</div>
-				<div class="carousel-dots" aria-hidden="true">
+			</section>
+
+			<section class="pending-section">
+				<h2>Pendientes</h2>
+				<ul>
 					{#each Array(3) as _, i (i)}
-						<span class="dot" class:active={i === 0}></span>
+						<li><span class="ghost ghost-row">&nbsp;</span></li>
+					{/each}
+				</ul>
+			</section>
+		</div>
+
+		<div class="dash-col dash-col-b">
+			<section class="chart-card chart-category">
+				<h2>Gastos por categoría</h2>
+				<span class="ghost ghost-chart-doughnut">&nbsp;</span>
+			</section>
+
+			<section class="top3-section">
+				<h2>Top categorías</h2>
+				<div class="top3">
+					{#each Array(3) as _, i (i)}
+						<div class="top3-cell">
+							<span class="label"><span class="ghost ghost-label">&nbsp;</span></span>
+							<span class="top3-pct"><span class="ghost ghost-delta">&nbsp;</span></span>
+							<div class="top3-track"></div>
+						</div>
 					{/each}
 				</div>
-			</div>
-		</section>
+			</section>
 
-		<section class="table-section">
-			<h2>Flujo neto — últimos 6 meses</h2>
-			<div class="table-scroll">
-				<table>
-					<thead>
-						<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
-					</thead>
-					<tbody>
-						{#each Array(6) as _, i (i)}
-							<tr>
-								<td><span class="ghost">&nbsp;</span></td>
-								<td><span class="ghost">&nbsp;</span></td>
-								<td><span class="ghost">&nbsp;</span></td>
-								<td><span class="ghost">&nbsp;</span></td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		</section>
-
-		<section class="pending-section">
-			<h2>Pendientes</h2>
-			<ul>
-				{#each Array(3) as _, i (i)}
-					<li><span class="ghost ghost-row">&nbsp;</span></li>
-				{/each}
-			</ul>
-		</section>
+			<section class="table-section">
+				<h2>Flujo neto — últimos 6 meses</h2>
+				<div class="table-scroll">
+					<table>
+						<thead>
+							<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
+						</thead>
+						<tbody>
+							{#each Array(6) as _, i (i)}
+								<tr>
+									<td><span class="ghost">&nbsp;</span></td>
+									<td><span class="ghost">&nbsp;</span></td>
+									<td><span class="ghost">&nbsp;</span></td>
+									<td><span class="ghost">&nbsp;</span></td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</section>
+		</div>
 	{:then payload}
 		{@const fmt = (/** @type {number} */ amount) => formatCurrency(amount, payload.period.currency)}
 		{#if payload.error}
@@ -209,51 +216,11 @@
 			{@const top3Mode = currentTop3.length > 0 ? 'current' : previousTop3.length > 0 ? 'previous' : 'empty'}
 			{@const top3Rows = top3Mode === 'current' ? currentTop3 : previousTop3}
 			{@const top3Total = top3Mode === 'current' ? payload.kpis.expenses : previousTotal}
-			<section class="top3-section">
-				<h2>Top categorías</h2>
-				{#if top3Mode === 'previous'}
-					<!-- Copy provisional, Camilo's to finalize (same convention as
-					     the Pending caught-up state above). -->
-					<p class="top3-note">
-						Mostrando {formatMonthAbbr(payload.previous_month.month)} {payload.previous_month.month.substring(0, 4)}
-						— sin gastos registrados este mes
-					</p>
-				{/if}
-				<div class="top3">
-					{#if top3Mode !== 'empty'}
-						{#each top3Rows as row (row.category)}
-							{@const short =
-								CATEGORY_SHORT[
-									/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
-								] ?? row.category}
-							{@const fill =
-								CATEGORY_COLOR[
-									/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
-								] ?? 'var(--ink-muted)'}
-							{@const share = row.amount / top3Total}
-							<div class="top3-cell">
-								<span class="label">{short}</span>
-								<span class="top3-pct">{(share * 100).toFixed(1)}%</span>
-								<div class="top3-track">
-									<div class="top3-fill" style="width: {share * 100}%; background: {fill};"></div>
-								</div>
-							</div>
-						{/each}
-					{:else}
-						{#each Array(3) as _, i (i)}
-							<div class="top3-cell">
-								<span class="label">—</span>
-								<span class="top3-pct">0%</span>
-								<div class="top3-track"></div>
-							</div>
-						{/each}
-					{/if}
-				</div>
-			</section>
-
-			<!-- Charts (Stage 6): carousel structure per D5 — desktop unwraps via
-			     display:contents (no carousel there); ≤480px the track scrolls
-			     with fixed-height slides (R2) and dots. -->
+			<!-- Charts (Stage 6, re-scoped by ADR-0030): the carousel now holds
+			     2 slides (line, payment) — the doughnut is a standalone card in
+			     Column B. Desktop unwraps via display:contents (no carousel
+			     there); ≤480px the track scrolls with fixed-height slides and
+			     dots. -->
 			<!-- Net-flow line (Stage 9, ADR-0023 D1/D3): daily_net_flow when
 			     present (contract 1.1) restores the daily x-axis (R3 target
 			     state); defensive fallback to net_flow_series (monthly, R3
@@ -269,79 +236,130 @@
 			{@const netFlowValues = dailySeries
 				? dailySeries.map((row) => row.value)
 				: payload.net_flow_series.map((row) => row.net_flow)}
-			<section class="charts-section">
-				<div class="carousel-wrap">
-					<div class="carousel-track" onscroll={syncChartDots}>
-						<div class="chart-card chart-netflow">
-							<h2>Evolución del flujo neto</h2>
-							<NetFlowChart labels={netFlowLabels} values={netFlowValues} />
+			<!-- Column wrappers (ADR-0030): DOM groups by desktop column;
+			     display:contents + order reproduce the mobile stacking. -->
+			<div class="dash-col dash-col-a">
+				<section class="charts-section">
+					<div class="carousel-wrap">
+						<div class="carousel-track" onscroll={syncChartDots}>
+							<div class="chart-card chart-netflow">
+								<h2>Evolución del flujo neto</h2>
+								<NetFlowChart labels={netFlowLabels} values={netFlowValues} />
+							</div>
+							<div class="chart-card chart-payment">
+								<h2>Gastos por método de pago</h2>
+								<PaymentMethodChart rows={payload.expenses_by_account} />
+							</div>
 						</div>
-						<div class="chart-card chart-payment">
-							<h2>Gastos por método de pago</h2>
-							<PaymentMethodChart rows={payload.expenses_by_account} />
-						</div>
-						<div class="chart-card chart-category">
-							<h2>Gastos por categoría</h2>
-							<CategoryChart rows={payload.expenses_by_category} />
-						</div>
-					</div>
-					<div class="carousel-dots" aria-hidden="true">
-						{#each Array(3) as _, i (i)}
-							<span class="dot" class:active={i === activeChartSlide}></span>
-						{/each}
-					</div>
-				</div>
-			</section>
-
-			<section class="table-section">
-				<h2>Flujo neto — últimos 6 meses</h2>
-				<div class="table-scroll">
-					<table>
-						<thead>
-							<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
-						</thead>
-						<tbody>
-							{#each payload.net_flow_series.slice(-6) as row (row.month)}
-								<tr>
-									<td>{row.month}</td>
-									<td class="value num">{fmt(row.income)}</td>
-									<td class="value num">{fmt(row.expenses)}</td>
-									<td class="value num">{fmt(row.net_flow)}</td>
-								</tr>
+						<div class="carousel-dots" aria-hidden="true">
+							{#each Array(2) as _, i (i)}
+								<span class="dot" class:active={i === activeChartSlide}></span>
 							{/each}
-						</tbody>
-					</table>
-				</div>
-			</section>
-
-			<section class="pending-section">
-				<h2>Pendientes</h2>
-				{#if payload.pending.length === 0}
-					<!-- Decision C: caught-up state carries ZERO CTA — Pending
-					     only comes from Gmail import; a Telegram CTA would be
-					     a false affordance. Copy is Camilo's to finalize. -->
-					<div class="state">
-						<svg class="state-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-							<path d="M3 8.5l3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-						</svg>
-						<div>
-							<p class="state-title">Todo al día</p>
-							<p class="state-line">No hay transacciones pendientes de confirmar.</p>
 						</div>
 					</div>
-				{:else}
-					<ul>
-						{#each payload.pending as row (row.id)}
-							<li>
-								<span>{row.date} · {row.merchant} · {row.description}</span>
-								<span class="value {row.type === 'Income' ? 'income-amt' : 'expense-amt'}"
-									>{row.type === 'Income' ? '+' : '−'}{fmt(row.amount)}</span
-								>
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</section>
+				</section>
+
+				<section class="pending-section">
+					<h2>Pendientes</h2>
+					{#if payload.pending.length === 0}
+						<!-- Decision C: caught-up state carries ZERO CTA — Pending
+						     only comes from Gmail import; a Telegram CTA would be
+						     a false affordance. Copy is Camilo's to finalize. -->
+						<div class="state">
+							<svg class="state-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+								<path d="M3 8.5l3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+							<div>
+								<p class="state-title">Todo al día</p>
+								<p class="state-line">No hay transacciones pendientes de confirmar.</p>
+							</div>
+						</div>
+					{:else}
+						<ul>
+							{#each payload.pending as row (row.id)}
+								<li>
+									<span>{row.date} · {row.merchant} · {row.description}</span>
+									<span class="value {row.type === 'Income' ? 'income-amt' : 'expense-amt'}"
+										>{row.type === 'Income' ? '+' : '−'}{fmt(row.amount)}</span
+									>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</section>
+			</div>
+
+			<div class="dash-col dash-col-b">
+				<!-- Standalone doughnut card (ADR-0030): out of the carousel,
+				     directly above Top categorías in the mobile reading order. -->
+				<section class="chart-card chart-category">
+					<h2>Gastos por categoría</h2>
+					<CategoryChart rows={payload.expenses_by_category} />
+				</section>
+
+				<section class="top3-section">
+					<h2>Top categorías</h2>
+					{#if top3Mode === 'previous'}
+						<!-- Copy provisional, Camilo's to finalize (same convention as
+						     the Pending caught-up state above). -->
+						<p class="top3-note">
+							Mostrando {formatMonthAbbr(payload.previous_month.month)} {payload.previous_month.month.substring(0, 4)}
+							— sin gastos registrados este mes
+						</p>
+					{/if}
+					<div class="top3">
+						{#if top3Mode !== 'empty'}
+							{#each top3Rows as row (row.category)}
+								{@const short =
+									CATEGORY_SHORT[
+										/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
+									] ?? row.category}
+								{@const fill =
+									CATEGORY_COLOR[
+										/** @type {import('$lib/charts/palette').ExpenseCategory} */ (row.category)
+									] ?? 'var(--ink-muted)'}
+								{@const share = row.amount / top3Total}
+								<div class="top3-cell">
+									<span class="label">{short}</span>
+									<span class="top3-pct">{(share * 100).toFixed(1)}%</span>
+									<div class="top3-track">
+										<div class="top3-fill" style="width: {share * 100}%; background: {fill};"></div>
+									</div>
+								</div>
+							{/each}
+						{:else}
+							{#each Array(3) as _, i (i)}
+								<div class="top3-cell">
+									<span class="label">—</span>
+									<span class="top3-pct">0%</span>
+									<div class="top3-track"></div>
+								</div>
+							{/each}
+						{/if}
+					</div>
+				</section>
+
+				<section class="table-section">
+					<h2>Flujo neto — últimos 6 meses</h2>
+					<div class="table-scroll">
+						<table>
+							<thead>
+								<tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Neto</th></tr>
+							</thead>
+							<tbody>
+								{#each payload.net_flow_series.slice(-6) as row (row.month)}
+									<tr>
+										<td>{row.month}</td>
+										<td class="value num">{fmt(row.income)}</td>
+										<td class="value num">{fmt(row.expenses)}</td>
+										<td class="value num">{fmt(row.net_flow)}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</section>
+			</div>
 		{/if}
 	{:catch}
 		{@render errorState('upstream')}
@@ -349,10 +367,46 @@
 </main>
 
 <style>
+	/* ADR-0030: flex column + explicit order below 1200px. The two
+	   .dash-col wrappers group content by DESKTOP column and dissolve
+	   here (display:contents), so their children join main's flex flow;
+	   the order values reproduce the ratified mobile stacking
+	   (KPIs → doughnut → Top categorías → charts → table → Pendientes)
+	   regardless of the column-grouped DOM order. */
 	main {
 		max-width: 720px;
 		margin: 0 auto;
 		padding: var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.dash-col {
+		display: contents;
+	}
+
+	.kpis {
+		order: 1;
+	}
+
+	.chart-category {
+		order: 2;
+	}
+
+	.top3-section {
+		order: 3;
+	}
+
+	.charts-section {
+		order: 4;
+	}
+
+	.table-section {
+		order: 5;
+	}
+
+	.pending-section {
+		order: 6;
 	}
 
 	header {
@@ -576,6 +630,14 @@
 		margin: 0;
 	}
 
+	/* ADR-0030 Option A: Pendientes scrolls internally past ~7 entries —
+	   never truncation, never hidden entries. All widths (harmless with
+	   few entries: max-height only binds when content exceeds it). */
+	.pending-section ul {
+		overflow-y: auto;
+		max-height: 280px;
+	}
+
 	li {
 		display: flex;
 		justify-content: space-between;
@@ -776,26 +838,18 @@
 		}
 	}
 
-	/* >=1200px (ADR-0029, Iteration 4 T2): same 2-column region as
-	   Iteration 3, but align-items:stretch (not start) plus exactly one
-	   elastic card per column (net-flow line chart in Column A, the
-	   6-month table in Column B). Sections dissolve into direct grid
-	   children via display:contents (same technique used at every width
-	   above 480px) so no markup below 769px needs to change.
-
-	   Row scheme: 3 shared rows. Row 3 (netflow+doughnut) and row 4
-	   (payment+Top categorías) are NOT guaranteed to align card-for-card
-	   — the shorter natural-height card in each row just leaves grid-
-	   track space before the next row (not dead space INSIDE any card;
-	   every natural-height card is align-self:start, exactly its own
-	   content height). Row 5 (Pendientes+table) IS guaranteed to align:
-	   both are the LAST item in their column, sharing the same terminal
-	   row line, so their bottoms land on the same pixel regardless of
-	   what happened in rows 3-4 — this is what satisfies the "align
-	   within 2px" result contract without a flex wrapper (ADR-0027/0028
-	   constraint carried forward: the doughnut must stay physically
-	   inside the ≤480px chart carousel's DOM). Measured gap values are
-	   logged in ADR-0029. */
+	/* >=1200px (ADR-0030, Iteration 5): TRUE equal-height columns. The
+	   doughnut's extraction from the mobile carousel removed the ADR-0027
+	   constraint that blocked per-column flex wrappers through
+	   Iterations 1-4.1. Header and KPIs span both grid columns; the two
+	   .dash-col wrappers share grid row 3 with align-items:stretch, so
+	   both columns are exactly as tall as the taller one and their
+	   bottom edges align by construction. Inside each column exactly ONE
+	   flexible absorber (line chart in A, doughnut in B) soaks up any
+	   height difference; every other card keeps natural height. The
+	   6-month table therefore needs none of Iteration 4/4.1's elastic
+	   machinery (deleted): natural rows are always legible AND the
+	   bottoms align — both gates satisfied structurally. */
 	@media (min-width: 1200px) {
 		main {
 			max-width: 1520px;
@@ -850,132 +904,72 @@
 			order: 4;
 		}
 
-		/* The section + its carousel wrapper dissolve so the three
-		   .chart-card divs become direct grid children of main. */
+		/* Column wrappers become real flex columns (display:contents below
+		   1200px). min-height:0 releases the flexbox intrinsic-minimum
+		   trap on the whole stretch chain. */
+		.dash-col {
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+			min-height: 0;
+			grid-row: 3;
+		}
+
+		.dash-col-a {
+			grid-column: 1;
+		}
+
+		.dash-col-b {
+			grid-column: 2;
+		}
+
+		/* The section + its carousel wrappers dissolve so the two chart
+		   cards become direct flex items of Column A. */
 		.charts-section,
 		.charts-section .carousel-wrap,
 		.charts-section .carousel-track {
 			display: contents;
 		}
 
-		/* THE elastic card in Column A: default align-items:stretch fills
-		   row 3's height (>= its own 320px min-height, component-level). */
+		/* THE absorber in Column A (card-level floor per ADR-0030; the
+		   component wrap releases its own min-height at this width). */
 		.chart-netflow {
-			grid-column: 1;
-			grid-row: 3;
+			flex: 1 1 auto;
+			min-height: 200px;
 		}
 
-		/* Natural/fixed — not stretched. */
 		.chart-payment {
-			grid-column: 1;
-			grid-row: 4;
-			align-self: start;
+			flex: 0 0 auto;
 		}
 
-		/* Pendientes: natural height, last item in Column A — shares the
-		   terminal row with the table (Column B's elastic card). */
 		.pending-section {
-			grid-column: 1;
-			grid-row: 5;
-			align-self: start;
+			flex: 0 0 auto;
 		}
 
-		/* Doughnut: natural height, fills card width (component-level:
-		   aspect-ratio wrapper, layout.padding:0). */
+		/* THE absorber in Column B. */
 		.chart-category {
-			grid-column: 2;
-			grid-row: 3;
-			align-self: start;
+			flex: 1 1 auto;
+			min-height: 180px;
 		}
 
 		.top3-section {
-			grid-column: 2;
-			grid-row: 4;
-			align-self: start;
+			flex: 0 0 auto;
 		}
 
-		/* THE elastic card in Column B: default align-items:stretch fills
-		   row 5's height, which Pendientes (Column A) also terminates —
-		   the alignment guarantee, WHEN Pendientes' own natural height
-		   already reaches this card's floor (ADR-0029 Iteration 4.1). */
+		/* Table card: natural height — ADR-0030 deleted the Iteration
+		   4/4.1 elastic machinery; card surface kept from Iteration 4. */
 		.table-section {
-			grid-column: 2;
-			grid-row: 5;
+			flex: 0 0 auto;
 			box-sizing: border-box;
 			padding: var(--spacing-md) var(--spacing-lg);
-			display: flex;
-			flex-direction: column;
-			/* Legibility floor (ADR-0029 Iteration 4.1 addendum — supersedes
-			   Iteration 4's "no min-height floor"): computed, not guessed.
-			   Global line-height is 1.5 (base.css).
-			   card padding:    2 * spacing-md (16px)      = 32px
-			   h2 heading:      16px * 1.5 + spacing-sm(8) = 32px
-			   header row:      13px * 1.5 + 6px padding   = 26px
-			   6 data rows:     6 * 26px reference height  = 156px
-			   total                                       = 246px */
-			min-height: 246px;
 			/* Luminance gradient, both endpoints surface tokens (ADR-0015). */
 			background: linear-gradient(var(--surface-raised), var(--surface));
 			border: 1px solid var(--hairline);
 			border-radius: var(--rounded-lg);
 		}
 
-		.table-section .table-scroll {
-			flex: 1;
-			min-height: 0;
-		}
-
 		.table-section table {
-			display: flex;
-			flex-direction: column;
-			height: 100%;
-			min-height: 0;
 			font-size: 0.8125rem;
-		}
-
-		.table-section th,
-		.table-section td {
-			padding: 3px var(--spacing-xs);
-		}
-
-		.table-section thead,
-		.table-section tbody {
-			display: contents;
-		}
-
-		.table-section tr {
-			display: flex;
-		}
-
-		.table-section thead tr {
-			flex: none;
-		}
-
-		/* Legibility floor (ADR-0029 Iteration 4.1 addendum — supersedes
-		   Iteration 4's "no min-height floor"): data rows never compress
-		   below 24px, whatever Pendientes' natural height is; they still
-		   grow evenly up to the 44px cap (Iteration 4 rule), leftover
-		   collecting below the last row (default flex-start). */
-		.table-section tbody tr {
-			flex: 1 1 0;
-			min-height: 24px;
-			max-height: 44px;
-		}
-
-		.table-section th,
-		.table-section td {
-			min-height: 0;
-			overflow: hidden;
-		}
-
-		.table-section th,
-		.table-section td {
-			flex: 1;
-		}
-
-		.table-section th:first-child,
-		.table-section td:first-child {
-			flex: 0.7;
 		}
 
 		/* Current month is always the last row (net_flow_series is
@@ -1058,9 +1052,14 @@
 		}
 	}
 
+	/* ADR-0030: mirrors CategoryChart's standalone square wrap. */
 	@media (max-width: 480px) {
 		.ghost-chart-doughnut {
-			height: 320px;
+			height: auto;
+			aspect-ratio: 1 / 1;
+			width: 100%;
+			max-width: 280px;
+			margin-inline: auto;
 		}
 	}
 

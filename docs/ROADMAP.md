@@ -266,6 +266,21 @@ re-verificados byte-idénticos al abrir, dos veces mid-stage, y al cerrar.
   paso manual separado.
 - **Pendiente de cierre:** confirmación de Camilo en el A56 real y en un
   desktop real (>=1200px).
+- **Iteración 5 (2026-07-18, ADR-0030):** el doughnut sale del carrusel
+  móvil (queda como card independiente, cuadrado 1:1, directamente sobre
+  Top categorías; el carrusel baja a 2 slides) — eso elimina la
+  restricción estructural de ADR-0027 y habilita las columnas flex por
+  columna en desktop: wrappers `.dash-col` con exactamente un absorbedor
+  flexible por columna (línea en A con piso 200px, doughnut en B con
+  piso 180px). Bordes inferiores alineados POR CONSTRUCCIÓN (delta
+  medido 0.00px en 1920×1080 y 1440×900, con 1 y con 11 pendientes);
+  tabla con filas naturales (28.5px, siempre legibles) — la maquinaria
+  elástica de Iteración 4/4.1 fue borrada. Pendientes con scroll interno
+  (Opción A, max-height 280px, nunca truncamiento). Supersede la
+  aceptación del delta 141/166/43px del addendum 4.1 (decisión ejecutiva
+  de Camilo tras ver el v4 desplegado). OJO: esta iteración SÍ cambia el
+  comportamiento móvil por diseño — atención explícita en la
+  verificación del A56.
 
 ## Backlog técnico
 

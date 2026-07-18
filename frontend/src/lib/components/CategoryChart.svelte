@@ -109,30 +109,30 @@
 		}
 	}
 
-	/* Stage 7: the ≤480px carousel slide grows to 320px — same height as the
-	   line/bar slides, removing the ~41px dead space noted in ADR-0019. */
+	/* ADR-0030: standalone card (out of the carousel) — fixed square
+	   aspect, width-capped so the card can't grow disproportionately
+	   tall on the A56, centered. Chart.js centers the ring's circle in
+	   the canvas (radius = min dimension), so it can never render as an
+	   ellipse at any width. */
 	@media (max-width: 480px) {
 		.chart-wrap {
-			height: 320px;
+			height: auto;
+			aspect-ratio: 1 / 1;
+			width: 100%;
+			max-width: 280px;
+			margin-inline: auto;
 		}
 	}
 
-	/* >=1200px (ADR-0029, Iteration 4): the doughnut must fill the card's
-	   full width (Column B is narrower than Column A) rather than use a
-	   fixed height — aspect-ratio derives the height from whatever width
-	   the 1fr column provides. Fallback for browsers without aspect-ratio
-	   support (none in this project's target set, but spec-mandated). */
+	/* >=1200px (ADR-0030, Iteration 5): the doughnut card is Column B's
+	   flexible absorber — the wrap fills whatever height the column
+	   grants (card-level 180px floor lives in +page.svelte); the circle
+	   centers inside the canvas per the Chart.js note above. */
 	@media (min-width: 1200px) {
 		.chart-wrap {
 			height: auto;
-			width: 100%;
-			aspect-ratio: 1.2 / 1;
-		}
-
-		@supports not (aspect-ratio: 1 / 1) {
-			.chart-wrap {
-				min-height: 300px;
-			}
+			flex: 1;
+			min-height: 0;
 		}
 	}
 </style>

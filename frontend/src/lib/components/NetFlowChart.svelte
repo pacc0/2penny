@@ -88,13 +88,12 @@
 		}
 	}
 
-	/* >=1200px (ADR-0029, Iteration 4): this is now THE elastic card in
-	   Column A — 320px matches the payment card's own height as a floor;
-	   the card's grid cell (align-items:stretch, default) grows it
-	   further if row 3 ends up taller (e.g. the doughnut needs more). */
+	/* >=1200px (ADR-0030, Iteration 5): the card is Column A's flexible
+	   absorber with a 200px card-level floor (+page.svelte) — the wrap
+	   releases its own floor so the card can follow the column. */
 	@media (min-width: 1200px) {
 		.chart-wrap {
-			min-height: 320px;
+			min-height: 0;
 		}
 	}
 </style>
