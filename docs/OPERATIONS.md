@@ -37,3 +37,31 @@ semanas antes de detectarse. Guardarraíles resultantes (Etapa 8):
 `GeminiGate.js` (cambio de modelo en un solo archivo) + `Canary.js`
 (llamada trivial periódica + alerta Telegram; vigilar deprecación de
 `gemini-3.1-flash-lite`, mayo 2027).
+
+## 7. Stage 8 manual steps (Camilo)
+
+Code never receives destructive GitHub/Apps Script permissions — these four
+steps are human-only, out of band from any Claude Code session. See
+ADR-0021 (D1/D3) and `docs/plans/stage-8-hardening.md`.
+
+1. **Create GitHub Secret `CLASPRC_JSON`.** Repo Settings → Secrets and
+   variables → Actions → New repository secret, name `CLASPRC_JSON`, value
+   = the full content of local `~/.clasprc.json`. Never paste the value in
+   chat, a commit, or a log — copy it directly from the file.
+2. **Create a daily time-driven trigger for `runCanary`.** Apps Script
+   editor (script id in `backend/.clasp.json`) → Triggers (clock icon) →
+   Add Trigger → function `runCanary`, event source Time-driven, Day timer,
+   pick any hour. This is the only way `Canary.js` actually runs — pushing
+   the code does not schedule it.
+3. **Run `clasp-guard` via `workflow_dispatch` and confirm green.** Actions
+   tab → clasp-guard → Run workflow → confirm the run succeeds (both
+   deploymentIds verified). This is the first real signal the secret from
+   step 1 is correct.
+4. **Forced-failure test.** From a throwaway branch, deliberately alter one
+   of the two ID constants in `.github/workflows/clasp-guard.yml`, push,
+   run `workflow_dispatch` on that branch, confirm the run fails red with
+   the expected `::error::` message, then delete the branch. This proves
+   the guard actually catches drift, not just that it runs.
+
+Stage 8 closes (via `stage-closer`) only after steps 3 and 4 have evidence
+attached — a green run and a red run, both real.

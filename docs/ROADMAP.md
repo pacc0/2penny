@@ -16,7 +16,7 @@ NO-cambia.
 | 5 | Rediseño visual Night Ledger | ✅ CERRADA 2026-07-12 |
 | 6 | Charts (Chart.js) | ✅ CERRADA 2026-07-13 |
 | 7 | Cutover + retiro del dashboard doGet v1.0 | ✅ CERRADA 2026-07-13 |
-| 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | 🟡 SIGUIENTE (re-evaluar ADR-0003) |
+| 8 | Endurecimiento: clasp-guard.yml, GeminiGate, Canary | 🟡 EN CURSO — T2–T4 entregados, cierre pendiente de pasos manuales de Camilo |
 
 ## Etapa 0 — evidencia de cierre (registrada)
 
@@ -209,7 +209,29 @@ de Camilo (Code nunca recibe permisos destructivos de GitHub).
 - **NO-cambia:** el procedimiento de clasp-deploy sigue siendo manual
   para el humano; clasp-guard solo verifica, no publica.
 - **Re-evaluar:** ADR-0003 (cuenta clasp dedicada, cuando `CLASPRC_JSON`
-  entra a GitHub Secrets).
+  entra a GitHub Secrets) — **resuelto en ADR-0021 D1: cuenta personal
+  se mantiene, migración diferida** (trigger: repo público o segundo
+  colaborador).
+
+### Progreso (2026-07-17, plan `docs/plans/stage-8-hardening.md`)
+
+Zero-deployment stage: `clasp push` únicamente, `@HEAD`. `@12`/`@21`
+re-verificados byte-idénticos tras cada push.
+
+- ✅ T0 baseline verificado contra ADR-0020 (sin mismatch).
+- ✅ T1 — plan + ADR-0021 (`cfa29b5`).
+- ✅ T2 — `clasp-guard.yml` activado, reemplaza el placeholder inerte de
+  Etapa 1 (`ae3be0e`).
+- ✅ T3 — `GeminiGate.js` creado, `GEMINI_MODEL_`/`GEMINI_API_BASE_URL_`
+  relocados desde `GeminiClient.js`, sin cambio de valor (`676ce6d`).
+- ✅ T4 — `Canary.js` (`runCanary()`), reutiliza helpers existentes, alerta
+  solo en fallo (`6af466b`).
+- 🟡 **Pendiente (humano, Camilo, ver OPERATIONS.md §7):** crear el secret
+  `CLASPRC_JSON`, crear el trigger diario de `runCanary` en Apps Script,
+  correr `clasp-guard` por `workflow_dispatch` y confirmar verde, y una
+  prueba de fallo forzado (id alterado en rama descartable) confirmando
+  rojo. **Cierre de la etapa vía `stage-closer` solo después de esa
+  evidencia.**
 
 ## Backlog técnico
 
