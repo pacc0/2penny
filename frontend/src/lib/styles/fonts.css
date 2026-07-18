@@ -1,26 +1,28 @@
-/* Self-hosted doctrine fonts (ADR-0016) — 3 files, latin subset only.
-   Family names must match the token stacks in tokens.css verbatim. */
+/* Self-hosted doctrine fonts (ADR-0016 pattern, ADR-0024 typography
+   refresh). Family names must match the token stacks in tokens.css
+   verbatim. Nunito Variable / Averia Sans Libre removed with ADR-0024 —
+   zero remaining consumers once tokens.css pointed elsewhere. */
 
 @font-face {
-  font-family: 'Nunito Variable';
+  font-family: 'Space Grotesk';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 1000;
-  src: url('/fonts/nunito-variable.woff2') format('woff2-variations');
+  font-weight: 300 700;
+  src: url('/fonts/space-grotesk-variable.woff2') format('woff2-variations');
 }
 
 @font-face {
-  font-family: 'Averia Sans Libre';
+  font-family: 'IBM Plex Sans Condensed';
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url('/fonts/averia-sans-libre-400.woff2') format('woff2');
+  src: url('/fonts/ibm-plex-sans-condensed-400.woff2') format('woff2');
 }
 
 @font-face {
-  font-family: 'Averia Sans Libre';
+  font-family: 'IBM Plex Sans Condensed';
   font-style: normal;
   font-display: swap;
-  font-weight: 700;
-  src: url('/fonts/averia-sans-libre-700.woff2') format('woff2');
+  font-weight: 600;
+  src: url('/fonts/ibm-plex-sans-condensed-600.woff2') format('woff2');
 }

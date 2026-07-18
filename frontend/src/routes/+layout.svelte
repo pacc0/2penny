@@ -11,7 +11,7 @@
 	<link rel="icon" href={favicon} />
 	<link
 		rel="preload"
-		href="/fonts/nunito-variable.woff2"
+		href="/fonts/ibm-plex-sans-condensed-400.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"

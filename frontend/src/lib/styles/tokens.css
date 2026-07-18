@@ -21,8 +21,11 @@
   --pending-grey-bg: #2A2A30;
   --chart-extra-1: #8B8BF5;
   --chart-extra-2: #E36FB1;
-  --font-text: 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
-  --font-numeric: 'Averia Sans Libre', 'Nunito Variable', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --savings-teal-tint: #85DBE6;
+  --delta-positive-on-tint: #0E7A3A;
+  --delta-negative-on-tint: #C2410C;
+  --font-text: 'IBM Plex Sans Condensed', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-numeric: 'Space Grotesk', 'IBM Plex Sans Condensed', system-ui, -apple-system, Roboto, Arial, sans-serif;
   --rounded-sm: 6px;
   --rounded-md: 10px;
   --rounded-lg: 14px;
